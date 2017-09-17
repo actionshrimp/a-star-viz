@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Dict exposing (Dict)
 import Html exposing (Html, text, div, img, h1)
-import Html.Events exposing (onClick)
+import Html.Events as E
 import Html.CssHelpers
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
@@ -21,12 +21,14 @@ type alias Model =
     , position : Coord
     , path : List Coord
     , svgSize : ( Int, Int )
+    , dragging : Maybe Tile
     }
 
 
 type Tile
     = E -- empty
     | Rock
+
 
 ( terrainSize, terrain ) =
     let
@@ -75,6 +77,7 @@ init =
       , position = ( 0, 0 )
       , path = []
       , svgSize = ( 512, 512 )
+      , dragging = Nothing
       }
     , Cmd.none
     )
@@ -85,16 +88,53 @@ init =
 
 
 type Msg
-    = GridClick ( Int, Int )
+    = MouseDown ( Int, Int )
+    | MouseEnter ( Int, Int )
+    | MouseUp
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update (GridClick ( x, y )) model =
+update msg model =
     let
-        dummy =
-            Debug.log "GridClick" ( x, y )
+        toggleTerrain t =
+            case t of
+                Rock ->
+                    E
+
+                E ->
+                    Rock
     in
-        ( model, Cmd.none )
+        case msg of
+            MouseDown coord ->
+                let
+                    targetTile =
+                        (Dict.get coord model.terrain)
+                            |> Maybe.withDefault E
+                            |> toggleTerrain
+                in
+                    ( { model
+                        | terrain = (Dict.insert coord targetTile model.terrain)
+                        , dragging = (Just targetTile)
+                      }
+                    , Cmd.none
+                    )
+
+            MouseEnter coord ->
+                ( case model.dragging of
+                    Nothing ->
+                        model
+
+                    Just t ->
+                        { model | terrain = (Dict.insert coord t model.terrain) }
+                , Cmd.none
+                )
+
+            MouseUp ->
+                ( { model
+                    | dragging = Nothing
+                  }
+                , Cmd.none
+                )
 
 
 
@@ -105,28 +145,14 @@ update (GridClick ( x, y )) model =
     Html.CssHelpers.withNamespace Styles.ns
 
 
-
--- divGrid : Model -> Html Msg
--- divGrid model =
---     let (w, h) = model.size in
---     div
---         [ class [ Styles.Grid ] ]
---         (List.repeat h
---             (div [ class [ Styles.GridRow ] ]
---                 (List.repeat model.size
---                     (div [ class [ Styles.GridCell ] ]
---                         [ Html.text "x" ]
---                     )
---                 )
---             )
---         )
-
-
 calcDeltas : Model -> ( Int, Int )
 calcDeltas model =
     let
-        ( w, h ) = model.svgSize
-        (rows, cols) = terrainSize
+        ( w, h ) =
+            model.svgSize
+
+        ( rows, cols ) =
+            terrainSize
     in
         ( w // rows
         , h // cols
@@ -145,17 +171,47 @@ clickListeners model =
         List.map
             (\( ( x, y ), tile ) ->
                 Svg.rect
-                    [ Svg.Attributes.x (toString (x * dx))
-                    , Svg.Attributes.y (toString (y * dy))
-                    , width (toString dx)
-                    , height (toString dy)
-                    , fill "red"
-                    , fillOpacity "0"
-                    , onClick (GridClick ( x, y ))
-                    ]
+                    (List.concat
+                        [ [ Svg.Attributes.x (toString (x * dx))
+                          , Svg.Attributes.y (toString (y * dy))
+                          , width (toString dx)
+                          , height (toString dy)
+                          , fill "red"
+                          , fillOpacity "0"
+                          , E.onMouseDown (MouseDown ( x, y ))
+                          ]
+                        , if (model.dragging /= Nothing) then
+                            [ E.onMouseEnter (MouseEnter ( x, y ))
+                            , E.onMouseUp MouseUp
+                            ]
+                          else
+                            []
+                        ]
+                    )
                     []
             )
             terrainList
+
+
+rocks : Model -> List (Svg Msg)
+rocks model =
+    let
+        ( dx, dy ) =
+            calcDeltas model
+    in
+        model.terrain
+            |> Dict.toList
+            |> List.filter (\( c, t ) -> t == Rock)
+            |> List.map
+                (\( ( x, y ), tile ) ->
+                    Svg.circle
+                        [ Svg.Attributes.cx (toString (x * dx + dx // 2))
+                        , Svg.Attributes.cy (toString (y * dy + dy // 2))
+                        , r (toString (dx // 2))
+                        , fill "red"
+                        ]
+                        []
+                )
 
 
 cellPoints : Model -> List (Svg Msg)
@@ -192,6 +248,7 @@ svgGrid model =
             ]
             (List.concat
                 [ (cellPoints model)
+                , (rocks model)
                 , (clickListeners model)
                 ]
             )
