@@ -28,54 +28,50 @@ type Tile
     = E -- empty
     | Rock
 
+( terrainSize, terrain ) =
+    let
+        terrainGrid =
+            [ [ E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E ]
+            ]
 
-terrainGrid : List (List Tile)
-terrainGrid =
-    [ [ E, E, E, E, E, E, E, E, E, E ]
-    , [ E, E, E, E, E, E, E, E, E, E ]
-    , [ E, E, E, E, E, E, E, E, E, E ]
-    , [ E, E, E, E, E, E, E, E, E, E ]
-    , [ E, E, E, E, E, E, E, E, E, E ]
-    , [ E, E, E, E, E, E, E, E, E, E ]
-    , [ E, E, E, E, E, E, E, E, E, E ]
-    , [ E, E, E, E, E, E, E, E, E, E ]
-    , [ E, E, E, E, E, E, E, E, E, E ]
-    , [ E, E, E, E, E, E, E, E, E, E ]
-    ]
+        cols =
+            terrainGrid
+                |> List.head
+                |> Maybe.withDefault []
+                |> List.length
 
-
-terrainCols : Int
-terrainCols =
-    terrainGrid
-        |> List.head
-        |> Maybe.withDefault []
-        |> List.length
-
-
-terrainRows : Int
-terrainRows =
-    terrainGrid
-        |> List.length
-
-
-terrainDict : Dict Coord Tile
-terrainDict =
-    terrainGrid
-        |> List.indexedMap
-            (\y row ->
-                List.indexedMap
-                    (\x tile ->
-                        ( ( x, y ), tile )
-                    )
-                    row
-            )
-        |> List.concat
-        |> Dict.fromList
+        rows =
+            terrainGrid
+                |> List.length
+    in
+        ( ( rows, cols )
+        , (terrainGrid
+            |> List.indexedMap
+                (\y row ->
+                    List.indexedMap
+                        (\x tile ->
+                            ( ( x, y ), tile )
+                        )
+                        row
+                )
+            |> List.concat
+            |> Dict.fromList
+          )
+        )
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { terrain = terrainDict
+    ( { terrain = terrain
       , position = ( 0, 0 )
       , path = []
       , svgSize = ( 512, 512 )
@@ -95,7 +91,8 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update (GridClick ( x, y )) model =
     let
-        dummy = Debug.log "GridClick" ( x, y )
+        dummy =
+            Debug.log "GridClick" ( x, y )
     in
         ( model, Cmd.none )
 
@@ -128,11 +125,11 @@ update (GridClick ( x, y )) model =
 calcDeltas : Model -> ( Int, Int )
 calcDeltas model =
     let
-        ( w, h ) =
-            model.svgSize
+        ( w, h ) = model.svgSize
+        (rows, cols) = terrainSize
     in
-        ( w // terrainRows
-        , h // terrainCols
+        ( w // rows
+        , h // cols
         )
 
 
