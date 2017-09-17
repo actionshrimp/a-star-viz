@@ -42,15 +42,15 @@ css =
             [ width (pct 100)
             ]
         , class Container
-            [ property "display" "flex"
+            [ displayFlex
             , justifyContent spaceAround
             ]
         , class Grid
-            [ property "display" "flex"
+            [ displayFlex
             , flexDirection column
             ]
         , class GridRow
-            [ property "display" "flex"
+            [ displayFlex
             , flexDirection row
             ]
         , class GridCell
