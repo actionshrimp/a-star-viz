@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import Types exposing (..)
 import Dict exposing (Dict)
 import Html exposing (Html, text, div, img, h1)
 import Html.Events as E
@@ -12,22 +13,13 @@ import Styles
 ---- MODEL ----
 
 
-type alias Coord =
-    ( Int, Int )
-
-
 type alias Model =
-    { terrain : Dict Coord Tile
+    { terrain : Terrain
     , position : Coord
     , path : List Coord
     , svgSize : ( Int, Int )
     , dragging : Maybe Tile
     }
-
-
-type Tile
-    = E -- empty
-    | Rock
 
 
 ( terrainSize, terrain ) =
