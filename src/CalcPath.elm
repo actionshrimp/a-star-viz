@@ -20,17 +20,20 @@ bestOpen open costs =
         |> List.filterMap
             (\( c, cost ) ->
                 costValue cost
-                    |> Maybe.map (\tc -> ( c, tc ))
+                    |> Maybe.map (\tc -> ( c, tc, cost.heuristicRemainingCost ))
             )
-        |> List.sortBy (\( c, total ) -> total)
+        |> List.sortBy (\( c, total, hc ) -> (total, hc))
         |> List.head
-        |> Maybe.map Tuple.first
-
+        |> Maybe.map (\( c, _, _ ) -> c)
 
 neighbours : Terrain -> Coord -> List Coord
 neighbours terrain ( x, y ) =
     [ ( x + 1, y )
+    , ( x + 1, y + 1 )
+    , ( x + 1, y - 1 )
     , ( x - 1, y )
+    , ( x - 1, y + 1 )
+    , ( x - 1, y - 1 )
     , ( x, y + 1 )
     , ( x, y - 1 )
     ]
@@ -56,22 +59,34 @@ heuristicRemainingCost goal c =
         ( x, y ) =
             c
     in
-        abs (gx - x) + abs (gy - y)
+        ((gx - x) ^ 2 + (gy - y) ^ 2)
+            |> toFloat
+            |> sqrt
+            |> (*) 10
+            |> round
 
 
-travelCost : Terrain -> Cost -> Coord -> WalkCost
-travelCost terrain parentCost c =
-    Dict.get c terrain
-        |> Maybe.andThen tileCost
-        |> Maybe.andThen
-            (\x ->
-                case parentCost.travelCost of
-                    Nothing ->
-                        Nothing
-
-                    Just y ->
-                        Just (x + y)
-            )
+travelCost : Terrain -> ( Maybe Coord, Cost ) -> Coord -> WalkCost
+travelCost terrain ( parentCoord, parentCost ) ( x, y ) =
+    let
+        _ =
+            Debug.log "parentCoord" parentCoord
+    in
+        Dict.get ( x, y ) terrain
+            |> Maybe.andThen tileCost
+            |> Maybe.map3
+                (\ptc ( px, py ) tc ->
+                    (ptc
+                        + (((px - x) ^ 2 + (py - y) ^ 2)
+                            |> toFloat
+                            |> sqrt
+                            |> (*) 10
+                            |> round
+                          )
+                    )
+                )
+                parentCost.travelCost
+                parentCoord
 
 
 calcCost : Model -> ( Maybe Coord, Cost ) -> Coord -> ( Coord, Cost )
@@ -79,7 +94,7 @@ calcCost model ( parentC, parentCost ) c =
     ( c
     , { parent = parentC
       , heuristicRemainingCost = heuristicRemainingCost model.goal c
-      , travelCost = travelCost model.terrain parentCost c
+      , travelCost = travelCost model.terrain ( parentC, parentCost ) c
       }
     )
 

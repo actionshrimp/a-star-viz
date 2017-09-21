@@ -296,6 +296,19 @@ progress model =
                             ]
                             []
                     )
+            , model.progress.closed
+                |> Set.toList
+                |> List.map
+                    (\( x, y ) ->
+                        Svg.rect
+                            [ SA.x (toString (x * dx))
+                            , SA.y (toString (y * dx))
+                            , SA.width (toString dx)
+                            , SA.height (toString dy)
+                            , SA.fill "green"
+                            ]
+                            []
+                    )
             , model.progress.costs
                 |> Dict.toList
                 |> List.concatMap
