@@ -1,40 +1,35 @@
 module Main exposing (..)
 
 import Types exposing (..)
+import CalcPath
+import Styles
 import Dict exposing (Dict)
-import Html exposing (Html, text, div, img, h1)
+import Set
+import Html exposing (Html, text, div, img, h1, button)
 import Html.Events as E
 import Html.CssHelpers
+import Html.Attributes as HA
 import Svg exposing (..)
-import Svg.Attributes exposing (..)
-import Styles
+import Svg.Attributes as SA
 
 
 ---- MODEL ----
 
 
-type alias Model =
-    { terrain : Terrain
-    , position : Coord
-    , path : List Coord
-    , svgSize : ( Int, Int )
-    , dragging : Maybe Tile
-    }
-
-
 ( terrainSize, terrain ) =
     let
         terrainGrid =
-            [ [ E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E ]
+            [ [ E, E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E, E ]
+            , [ E, E, E, E, E, E, E, E, E, E, E ]
             ]
 
         cols =
@@ -65,14 +60,28 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( { terrain = terrain
-      , position = ( 0, 0 )
-      , path = []
-      , svgSize = ( 512, 512 )
-      , dragging = Nothing
-      }
-    , Cmd.none
-    )
+    let
+        start =
+            ( 0, 0 )
+
+        goal =
+            ( 10, 10 )
+    in
+        ( { terrain = terrain
+          , start = start
+          , goal = goal
+          , path = []
+          , svgSize = ( 512, 512 )
+          , dragging = Nothing
+          , progress =
+                { open = Set.fromList ([ start ])
+                , costs = Dict.fromList [ ( start, CalcPath.startCost goal start ) ]
+                , closed = Set.empty
+                }
+          , canIterate = True
+          }
+        , Cmd.none
+        )
 
 
 
@@ -83,6 +92,7 @@ type Msg
     = MouseDown ( Int, Int )
     | MouseEnter ( Int, Int )
     | MouseUp
+    | Iterate
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -128,6 +138,20 @@ update msg model =
                 , Cmd.none
                 )
 
+            Iterate ->
+                ( let
+                    next =
+                        CalcPath.iterate model model.progress
+                  in
+                    case next of
+                        Nothing ->
+                            { model | canIterate = False }
+
+                        Just it ->
+                            { model | progress = it }
+                , Cmd.none
+                )
+
 
 
 ---- VIEW ----
@@ -151,6 +175,49 @@ calcDeltas model =
         )
 
 
+cellPoints : Model -> List (Svg Msg)
+cellPoints model =
+    let
+        ( dx, dy ) =
+            calcDeltas model
+
+        terrainList =
+            Dict.toList model.terrain
+    in
+        List.map
+            (\( ( x, y ), tile ) ->
+                Svg.circle
+                    [ SA.cx (toString (x * dx + dx // 2))
+                    , SA.cy (toString (y * dy + dy // 2))
+                    , SA.r (toString (dx // 20))
+                    , SA.fill "black"
+                    ]
+                    []
+            )
+            terrainList
+
+
+startAndGoal : Model -> List (Svg Msg)
+startAndGoal model =
+    let
+        ( dx, dy ) =
+            calcDeltas model
+    in
+        List.map
+            (\( ( x, y ), color ) ->
+                Svg.circle
+                    [ SA.cx (toString (x * dx + dx // 2))
+                    , SA.cy (toString (y * dy + dy // 2))
+                    , SA.r (toString (dx // 5))
+                    , SA.fill color
+                    ]
+                    []
+            )
+            [ ( model.start, "blue" )
+            , ( model.goal, "green" )
+            ]
+
+
 clickListeners : Model -> List (Svg Msg)
 clickListeners model =
     let
@@ -164,12 +231,12 @@ clickListeners model =
             (\( ( x, y ), tile ) ->
                 Svg.rect
                     (List.concat
-                        [ [ Svg.Attributes.x (toString (x * dx))
-                          , Svg.Attributes.y (toString (y * dy))
-                          , width (toString dx)
-                          , height (toString dy)
-                          , fill "red"
-                          , fillOpacity "0"
+                        [ [ SA.x (toString (x * dx))
+                          , SA.y (toString (y * dy))
+                          , SA.width (toString dx)
+                          , SA.height (toString dy)
+                          , SA.fill "red"
+                          , SA.fillOpacity "0"
                           , E.onMouseDown (MouseDown ( x, y ))
                           ]
                         , if (model.dragging /= Nothing) then
@@ -196,36 +263,80 @@ rocks model =
             |> List.filter (\( c, t ) -> t == Rock)
             |> List.map
                 (\( ( x, y ), tile ) ->
-                    Svg.circle
-                        [ Svg.Attributes.cx (toString (x * dx + dx // 2))
-                        , Svg.Attributes.cy (toString (y * dy + dy // 2))
-                        , r (toString (dx // 2))
-                        , fill "red"
+                    Svg.rect
+                        [ SA.x (toString (x * dx))
+                        , SA.y (toString (y * dy))
+                        , SA.width (toString dx)
+                        , SA.height (toString dy)
+                        , SA.fill "#993333"
+                        , SA.stroke "#771111"
                         ]
                         []
                 )
 
 
-cellPoints : Model -> List (Svg Msg)
-cellPoints model =
+progress : Model -> List (Svg Msg)
+progress model =
     let
         ( dx, dy ) =
             calcDeltas model
-
-        terrainList =
-            Dict.toList model.terrain
     in
-        List.map
-            (\( ( x, y ), tile ) ->
-                Svg.circle
-                    [ Svg.Attributes.cx (toString (x * dx + dx // 2))
-                    , Svg.Attributes.cy (toString (y * dy + dy // 2))
-                    , r "2"
-                    , fill "black"
-                    ]
-                    []
-            )
-            terrainList
+        List.concat
+            [ model.progress.open
+                |> Set.toList
+                |> List.map
+                    (\( x, y ) ->
+                        Svg.rect
+                            [ SA.x (toString (x * dx))
+                            , SA.y (toString (y * dx))
+                            , SA.width (toString dx)
+                            , SA.height (toString dy)
+                            , SA.fillOpacity "0"
+                            , SA.stroke "grey"
+                            ]
+                            []
+                    )
+            , model.progress.costs
+                |> Dict.toList
+                |> List.concatMap
+                    (\( ( x, y ), cost ) ->
+                        [ Svg.text_
+                            [ SA.x (toString (x * dx + 5))
+                            , SA.y (toString (y * dy + 15))
+                            , SA.style "font-size: 10px"
+                            ]
+                            [ Svg.text
+                                (case cost.travelCost of
+                                    Nothing ->
+                                        "-"
+
+                                    Just x ->
+                                        (toString x)
+                                )
+                            ]
+                        , Svg.text_
+                            [ SA.x (toString (x * dx + dx - 15))
+                            , SA.y (toString (y * dy + 15))
+                            , SA.style "font-size: 10px"
+                            ]
+                            [ Svg.text (toString cost.heuristicRemainingCost) ]
+                        , Svg.text_
+                            [ SA.x (toString (x * dx + 5))
+                            , SA.y (toString (y * dy + dy - 5))
+                            , SA.style "font-size: 10px"
+                            ]
+                            [ Svg.text
+                                (case (CalcPath.costValue cost) of
+                                    Nothing ->
+                                        "-"
+
+                                    Just x ->
+                                        (toString x)
+                                )
+                            ]
+                        ]
+                    )
+            ]
 
 
 svgGrid : Model -> Svg Msg
@@ -235,12 +346,14 @@ svgGrid model =
             model.svgSize
     in
         svg
-            [ width (toString w)
-            , height (toString h)
+            [ SA.width (toString w)
+            , SA.height (toString h)
             ]
             (List.concat
                 [ (cellPoints model)
                 , (rocks model)
+                , (startAndGoal model)
+                , (progress model)
                 , (clickListeners model)
                 ]
             )
@@ -250,6 +363,11 @@ view : Model -> Html Msg
 view model =
     div [ id [ Styles.Page ] ]
         [ h1 [] [ (Html.text "Pathfinder") ]
+        , button
+            [ (E.onClick Iterate)
+            , (HA.disabled (not model.canIterate))
+            ]
+            [ (Html.text "Iterate") ]
         , div [ class [ Styles.Container ] ]
             [ svgGrid model
             ]
