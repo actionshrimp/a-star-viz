@@ -91,7 +91,8 @@ type Msg
     | MouseUp
     | Iterate
     | ToggleAutoIterate
-    | Reset
+    | ResetTerrain
+    | ResetProgress
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -168,9 +169,17 @@ update msg model =
             ToggleAutoIterate ->
                 ( { model | autoIterate = (not oldAutoIterate) }, Cmd.none )
 
-            Reset ->
-                init
+            ResetProgress ->
+                let
+                    (initial, _) = init
+                in
+                    ({ model | progress = initial.progress, canIterate = initial.canIterate, path = initial.path, autoIterate = initial.autoIterate  }, Cmd.none)
 
+            ResetTerrain ->
+                let
+                    (initial, _) = init
+                in
+                    ({ model | terrain = initial.terrain }, Cmd.none)
 
 
 ---- VIEW ----
@@ -377,23 +386,27 @@ view model =
                 ]
             , div [ class [ Styles.Sidebar ] ]
                 [ button
-                    [ (E.onClick Reset)
+                    [ (E.onClick ResetProgress)
                     ]
-                    [ (Html.text "Reset") ]
+                    [ (Html.text "Reset progress") ]
+                , button
+                    [ (E.onClick ResetTerrain)
+                    ]
+                    [ (Html.text "Reset terrain") ]
                 , button
                     [ (E.onClick Iterate)
                     , (HA.disabled (not model.canIterate))
                     ]
-                    [ (Html.text "Iterate") ]
+                    [ (Html.text "Step") ]
                 , button
                     [ (E.onClick ToggleAutoIterate)
                     , (HA.disabled (not model.canIterate))
                     ]
                     [ (Html.text
                         (if (model.canIterate && model.autoIterate) then
-                            "Stop Auto"
+                            "Stop"
                          else
-                            "Auto"
+                            "Solve"
                         )
                       )
                     ]
