@@ -43,5 +43,6 @@ type alias Model =
     , progress : Iteration
     , canIterate : Bool
     , autoIterate : Bool
+    , showConnections : Bool
     }
 

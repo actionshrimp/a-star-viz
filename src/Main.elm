@@ -6,7 +6,7 @@ import Styles
 import Dict exposing (Dict)
 import Set
 import Time
-import Html exposing (Html, text, div, img, h1, button)
+import Html exposing (Html, text, div, img, h1, button, input, label)
 import Html.Events as E
 import Html.CssHelpers
 import Html.Attributes as HA
@@ -76,6 +76,7 @@ init =
                 }
           , canIterate = True
           , autoIterate = False
+          , showConnections = False
           }
         , Cmd.none
         )
@@ -93,6 +94,7 @@ type Msg
     | ToggleAutoIterate
     | ResetTerrain
     | ResetProgress
+    | ToggleShowConnections
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -108,6 +110,9 @@ update msg model =
 
         oldAutoIterate =
             model.autoIterate
+
+        oldShowConnections =
+            model.showConnections
     in
         case msg of
             MouseDown coord ->
@@ -169,17 +174,23 @@ update msg model =
             ToggleAutoIterate ->
                 ( { model | autoIterate = (not oldAutoIterate) }, Cmd.none )
 
+            ToggleShowConnections ->
+                ( { model | showConnections = (not oldShowConnections) }, Cmd.none )
+
             ResetProgress ->
                 let
-                    (initial, _) = init
+                    ( initial, _ ) =
+                        init
                 in
-                    ({ model | progress = initial.progress, canIterate = initial.canIterate, path = initial.path, autoIterate = initial.autoIterate  }, Cmd.none)
+                    ( { model | progress = initial.progress, canIterate = initial.canIterate, path = initial.path, autoIterate = initial.autoIterate }, Cmd.none )
 
             ResetTerrain ->
                 let
-                    (initial, _) = init
+                    ( initial, _ ) =
+                        init
                 in
-                    ({ model | terrain = initial.terrain }, Cmd.none)
+                    ( { model | terrain = initial.terrain }, Cmd.none )
+
 
 
 ---- VIEW ----
@@ -303,6 +314,85 @@ rocks model =
                 )
 
 
+connections : Model -> List (Svg Msg)
+connections model =
+    if not model.showConnections then
+        []
+    else
+        List.concat
+            [ model.progress.open |> Set.toList
+            , model.progress.closed |> Set.toList
+            ]
+            |> List.filterMap
+                (\c ->
+                    let
+                        ( x, y ) =
+                            c
+
+                        ( dx, dy ) =
+                            calcDeltas model
+
+                        cost =
+                            Dict.get c model.progress.costs
+                    in
+                        cost
+                            |> Maybe.andThen (\cost -> cost.parent)
+                            |> Maybe.map
+                                (\( px, py ) ->
+                                    Svg.line
+                                        [ SA.x1 (toString (x * dx + dx // 2))
+                                        , SA.y1 (toString (y * dy + dy // 2))
+                                        , SA.x2 (toString (px * dx + dx // 2))
+                                        , SA.y2 (toString (py * dy + dy // 2))
+                                        , SA.stroke ("#" ++ Styles.secX4)
+                                        , SA.strokeOpacity "0.5"
+                                        , SA.strokeWidth "4"
+                                        ]
+                                        []
+                                )
+                )
+
+
+pathConnections : Model -> List (Svg Msg)
+pathConnections model =
+    if not model.showConnections then
+        []
+    else
+        model.path
+            |> Maybe.map
+                (\path ->
+                    path
+                        |> List.filterMap
+                            (\c ->
+                                let
+                                    ( x, y ) =
+                                        c
+
+                                    ( dx, dy ) =
+                                        calcDeltas model
+
+                                    cost =
+                                        Dict.get c model.progress.costs
+                                in
+                                    cost
+                                        |> Maybe.andThen (\cost -> cost.parent)
+                                        |> Maybe.map
+                                            (\( px, py ) ->
+                                                Svg.line
+                                                    [ SA.x1 (toString (x * dx + dx // 2))
+                                                    , SA.y1 (toString (y * dy + dy // 2))
+                                                    , SA.x2 (toString (px * dx + dx // 2))
+                                                    , SA.y2 (toString (py * dy + dy // 2))
+                                                    , SA.stroke ("#" ++ Styles.complement4)
+                                                    , SA.strokeWidth "4"
+                                                    ]
+                                                    []
+                                            )
+                            )
+                )
+               |> Maybe.withDefault []
+
+
 progress : Model -> List (Svg Msg)
 progress model =
     let
@@ -366,8 +456,10 @@ svgGrid model =
             , SA.height (toString h)
             ]
             (List.concat
-                [ (progress model)
-                , (startAndGoal model)
+                [ (startAndGoal model)
+                , (progress model)
+                , (connections model)
+                , (pathConnections model)
                 , (rocks model)
                 , (cellPoints model)
                 , (clickListeners model)
@@ -385,7 +477,13 @@ view model =
                 [ svgGrid model
                 ]
             , div [ class [ Styles.Sidebar ] ]
-                [ button
+                [ label [ class [ Styles.ToggleOption ] ]
+                    [ input [ HA.type_ "checkbox"
+                            , E.onClick ToggleShowConnections
+                            , HA.checked model.showConnections ] []
+                    , Html.text "Show connections"
+                    ]
+                , button
                     [ (E.onClick ResetProgress)
                     ]
                     [ (Html.text "Reset progress") ]

@@ -19,6 +19,7 @@ type CssClasses
     | Sidebar
     | Header
     | HeaderRule
+    | ToggleOption
 
 
 type CssIds
@@ -188,6 +189,10 @@ css =
             ]
         , class Sidebar
             [ padding (px 20)
+            ]
+        , class ToggleOption
+            [ marginBottom (em 1)
+            , display block
             ]
         , button
             [ backgroundImage none

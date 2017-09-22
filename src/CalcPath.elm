@@ -185,6 +185,6 @@ tracePath coord it coords =
 hasPath : Model -> Iteration -> Maybe (List Coord)
 hasPath model it =
     if (Set.member model.goal it.closed) then
-        Just (tracePath model.goal it [])
+        Just (tracePath model.goal it [model.goal])
     else
         Nothing
