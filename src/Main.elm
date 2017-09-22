@@ -20,7 +20,7 @@ import Svg.Attributes as SA
 ( terrainSize, terrain ) =
     let
         ( w, h ) =
-            ( 50, 50 )
+            ( 32, 32 )
 
         terrainGrid =
             List.repeat h (List.repeat w E)
@@ -91,7 +91,7 @@ type Msg
     | MouseUp
     | Iterate
     | ToggleAutoIterate
-    | Reset 
+    | Reset
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -407,33 +407,34 @@ svgGrid model =
 view : Model -> Html Msg
 view model =
     div [ id [ Styles.Page ] ]
-        [ h1 [] [ (Html.text "Pathfinder") ]
-        , div []
-            [ button
-                [ (E.onClick Reset)
-                ]
-                [ (Html.text "Reset") ]
-            , button
-                [ (E.onClick Iterate)
-                , (HA.disabled (not model.canIterate))
-                ]
-                [ (Html.text "Iterate") ]
-
-            , button
-                [ (E.onClick ToggleAutoIterate)
-                , (HA.disabled (not model.canIterate))
-                ]
-                [ (Html.text
-                    (if (model.canIterate && model.autoIterate) then
-                        "Stop Auto"
-                     else
-                        "Auto"
-                    )
-                  )
-                ]
-            ]
+        [ div [ class [ Styles.Header ] ] [ (Html.text "Pathfinder") ]
         , div [ class [ Styles.Container ] ]
-            [ svgGrid model
+            [ div [ class [ Styles.Container ] ]
+                [ svgGrid model
+                ]
+            , div [ class [ Styles.Sidebar ] ]
+                [ button
+                    [ (E.onClick Reset)
+                    ]
+                    [ (Html.text "Reset") ]
+                , button
+                    [ (E.onClick Iterate)
+                    , (HA.disabled (not model.canIterate))
+                    ]
+                    [ (Html.text "Iterate") ]
+                , button
+                    [ (E.onClick ToggleAutoIterate)
+                    , (HA.disabled (not model.canIterate))
+                    ]
+                    [ (Html.text
+                        (if (model.canIterate && model.autoIterate) then
+                            "Stop Auto"
+                         else
+                            "Auto"
+                        )
+                      )
+                    ]
+                ]
             ]
         ]
 
@@ -441,7 +442,7 @@ view model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     if (model.canIterate && model.autoIterate) then
-        Time.every (Time.millisecond * 20) (always Iterate)
+        Time.every (Time.millisecond * 2) (always Iterate)
     else
         Sub.none
 

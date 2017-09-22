@@ -15,6 +15,8 @@ type CssClasses
     | GridRow
     | GridCell
     | Container
+    | Sidebar
+    | Header
 
 
 type CssIds
@@ -82,11 +84,16 @@ css =
             , property "user-select" "none"
             ]
         , id Page
-            [ width (pct 100)
+            [ padding (em 1)
+            ]
+        , class Header
+            [ fontSize (em 1.2)
+            , textAlign left
+            , marginBottom (em 1)
             ]
         , class Container
             [ displayFlex
-            , justifyContent spaceAround
+            , justifyContent flexStart
             ]
         , class Grid
             [ displayFlex
@@ -99,6 +106,9 @@ css =
         , class GridCell
             [ width (px 50)
             , height (px 50)
+            ]
+        , class Sidebar
+            [ padding (px 20)
             ]
         ]
 
