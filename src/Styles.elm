@@ -1,5 +1,6 @@
 module Styles exposing (..)
 
+import Color
 import Css exposing (..)
 import Css.Elements exposing (body, li)
 import Css.Namespace exposing (namespace)
@@ -17,6 +18,7 @@ type CssClasses
     | Container
     | Sidebar
     | Header
+    | HeaderRule
 
 
 type CssIds
@@ -89,11 +91,17 @@ css =
         , class Header
             [ fontSize (em 1.2)
             , textAlign left
-            , marginBottom (em 1)
+            , color (hex primary0)
+            ]
+        , class HeaderRule
+            [ backgroundImage (linearGradient2 toRight (stop <| (hex complement0)) (stop <| (hex "FFFFFF")) [])
+            , height (px 3)
+            , width (pct 100)
             ]
         , class Container
             [ displayFlex
             , justifyContent flexStart
+            , marginTop (em 1)
             ]
         , class Grid
             [ displayFlex

@@ -408,6 +408,7 @@ view : Model -> Html Msg
 view model =
     div [ id [ Styles.Page ] ]
         [ div [ class [ Styles.Header ] ] [ (Html.text "Pathfinder") ]
+        , div [ class [ Styles.HeaderRule ] ] []
         , div [ class [ Styles.Container ] ]
             [ div [ class [ Styles.Container ] ]
                 [ svgGrid model
