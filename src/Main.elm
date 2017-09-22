@@ -141,24 +141,27 @@ update msg model =
                 )
 
             Iterate ->
-                ( let
-                    next =
-                        CalcPath.iterate model model.progress
+                ( if not model.canIterate then
+                    model
+                  else
+                    let
+                        next =
+                            CalcPath.iterate model model.progress
 
-                    path =
-                        next |> Maybe.andThen (CalcPath.hasPath model)
+                        path =
+                            next |> Maybe.andThen (CalcPath.hasPath model)
 
-                    canIterate =
-                        next /= Nothing && path == Nothing
+                        canIterate =
+                            next /= Nothing && path == Nothing
 
-                    progress =
-                        Maybe.withDefault model.progress next
-                  in
-                    { model
-                        | canIterate = canIterate
-                        , path = path
-                        , progress = progress
-                    }
+                        progress =
+                            Maybe.withDefault model.progress next
+                    in
+                        { model
+                            | canIterate = canIterate
+                            , path = path
+                            , progress = progress
+                        }
                 , Cmd.none
                 )
 
