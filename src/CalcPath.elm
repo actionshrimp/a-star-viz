@@ -170,13 +170,16 @@ iterate model it =
 tracePath : Coord -> Iteration -> List Coord -> List Coord
 tracePath coord it coords =
     let
-        next = Dict.get coord it.costs
-               |> Maybe.andThen (\c -> c.parent)
-
+        next =
+            Dict.get coord it.costs
+                |> Maybe.andThen (\c -> c.parent)
     in
         case next of
-            Nothing -> coords
-            Just c -> tracePath c it (c :: coords)
+            Nothing ->
+                coords
+
+            Just c ->
+                tracePath c it (c :: coords)
 
 
 hasPath : Model -> Iteration -> Maybe (List Coord)
