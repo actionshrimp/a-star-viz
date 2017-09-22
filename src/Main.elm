@@ -20,7 +20,7 @@ import Svg.Attributes as SA
 ( terrainSize, terrain ) =
     let
         ( w, h ) =
-            ( 30, 30 )
+            ( 50, 50 )
 
         terrainGrid =
             List.repeat h (List.repeat w E)
@@ -66,7 +66,7 @@ init =
         ( { terrain = terrain
           , start = start
           , goal = goal
-          , path = []
+          , path = Nothing
           , svgSize = ( 512, 512 )
           , dragging = Nothing
           , progress =
@@ -91,6 +91,7 @@ type Msg
     | MouseUp
     | Iterate
     | ToggleAutoIterate
+    | Reset 
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -104,7 +105,8 @@ update msg model =
                 E ->
                     Rock
 
-        oldAutoIterate = model.autoIterate
+        oldAutoIterate =
+            model.autoIterate
     in
         case msg of
             MouseDown coord ->
@@ -142,18 +144,29 @@ update msg model =
                 ( let
                     next =
                         CalcPath.iterate model model.progress
-                  in
-                    case next of
-                        Nothing ->
-                            { model | canIterate = False }
 
-                        Just it ->
-                            { model | progress = it }
+                    path =
+                        next |> Maybe.andThen (CalcPath.hasPath model)
+
+                    canIterate =
+                        next /= Nothing && path == Nothing
+
+                    progress =
+                        Maybe.withDefault model.progress next
+                  in
+                    { model
+                        | canIterate = canIterate
+                        , path = path
+                        , progress = progress
+                    }
                 , Cmd.none
                 )
 
             ToggleAutoIterate ->
                 ( { model | autoIterate = (not oldAutoIterate) }, Cmd.none )
+
+            Reset ->
+                init
 
 
 
@@ -192,8 +205,9 @@ cellPoints model =
                 Svg.circle
                     [ SA.cx (toString (x * dx + dx // 2))
                     , SA.cy (toString (y * dy + dy // 2))
-                    , SA.r (toString (dx // 20))
-                    , SA.fill "black"
+                    , SA.r (toString (max (dx // 20) 1))
+                    , SA.fill ("#" ++ Styles.grey)
+                    , SA.fillOpacity "0.2"
                     ]
                     []
             )
@@ -208,16 +222,16 @@ startAndGoal model =
     in
         List.map
             (\( ( x, y ), color ) ->
-                Svg.circle
-                    [ SA.cx (toString (x * dx + dx // 2))
-                    , SA.cy (toString (y * dy + dy // 2))
-                    , SA.r (toString (dx // 5))
+                Svg.rect
+                    [ SA.x (toString (x * dx))
+                    , SA.y (toString (y * dy))
+                    , SA.width (toString dx)
+                    , SA.height (toString dy)
                     , SA.fill color
                     ]
                     []
             )
-            [ ( model.start, "blue" )
-            , ( model.goal, "green" )
+            [ ( model.goal, ("#" ++ Styles.complement0) )
             ]
 
 
@@ -238,7 +252,6 @@ clickListeners model =
                           , SA.y (toString (y * dy))
                           , SA.width (toString dx)
                           , SA.height (toString dy)
-                          , SA.fill "red"
                           , SA.fillOpacity "0"
                           , E.onMouseDown (MouseDown ( x, y ))
                           ]
@@ -271,8 +284,8 @@ rocks model =
                         , SA.y (toString (y * dy))
                         , SA.width (toString dx)
                         , SA.height (toString dy)
-                        , SA.fill "#993333"
-                        , SA.stroke "#771111"
+                        , SA.fill ("#" ++ Styles.secY0)
+                        , SA.stroke ("#" ++ Styles.secY3)
                         ]
                         []
                 )
@@ -295,7 +308,7 @@ progress model =
                             , SA.width (toString dx)
                             , SA.height (toString dy)
                             , SA.fillOpacity "0"
-                            , SA.stroke "grey"
+                            , SA.stroke ("#" ++ Styles.secX1)
                             ]
                             []
                     )
@@ -308,7 +321,22 @@ progress model =
                             , SA.y (toString (y * dx))
                             , SA.width (toString dx)
                             , SA.height (toString dy)
-                            , SA.fill "green"
+                            , SA.fill ("#" ++ Styles.secX0)
+                            , SA.stroke ("#" ++ Styles.secX3)
+                            ]
+                            []
+                    )
+            , model.path
+                |> Maybe.withDefault []
+                |> List.map
+                    (\( x, y ) ->
+                        Svg.rect
+                            [ SA.x (toString (x * dx))
+                            , SA.y (toString (y * dx))
+                            , SA.width (toString dx)
+                            , SA.height (toString dy)
+                            , SA.fill ("#" ++ Styles.primary0)
+                            , SA.stroke ("#" ++ Styles.primary3)
                             ]
                             []
                     )
@@ -367,10 +395,10 @@ svgGrid model =
             , SA.height (toString h)
             ]
             (List.concat
-                [ (cellPoints model)
-                , (rocks model)
+                [ (progress model)
                 , (startAndGoal model)
-                , (progress model)
+                , (rocks model)
+                , (cellPoints model)
                 , (clickListeners model)
                 ]
             )
@@ -382,15 +410,27 @@ view model =
         [ h1 [] [ (Html.text "Pathfinder") ]
         , div []
             [ button
+                [ (E.onClick Reset)
+                ]
+                [ (Html.text "Reset") ]
+            , button
                 [ (E.onClick Iterate)
                 , (HA.disabled (not model.canIterate))
                 ]
                 [ (Html.text "Iterate") ]
+
             , button
                 [ (E.onClick ToggleAutoIterate)
                 , (HA.disabled (not model.canIterate))
                 ]
-                [ (Html.text (if model.autoIterate then "Stop Auto" else "Auto")) ]
+                [ (Html.text
+                    (if (model.canIterate && model.autoIterate) then
+                        "Stop Auto"
+                     else
+                        "Auto"
+                    )
+                  )
+                ]
             ]
         , div [ class [ Styles.Container ] ]
             [ svgGrid model
@@ -400,8 +440,8 @@ view model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    if model.autoIterate then
-        Time.every (Time.millisecond * 50) (always Iterate)
+    if (model.canIterate && model.autoIterate) then
+        Time.every (Time.millisecond * 20) (always Iterate)
     else
         Sub.none
 

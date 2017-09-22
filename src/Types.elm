@@ -37,7 +37,7 @@ type alias Model =
     { terrain : Terrain
     , start : Coord
     , goal : Coord
-    , path : List Coord
+    , path : Maybe (List Coord)
     , svgSize : ( Int, Int )
     , dragging : Maybe Tile
     , progress : Iteration

@@ -1,4 +1,4 @@
-module CalcPath exposing (iterate, startCost, costValue)
+module CalcPath exposing (iterate, startCost, costValue, hasPath)
 
 import Types exposing (..)
 import Tuple
@@ -22,9 +22,10 @@ bestOpen open costs =
                 costValue cost
                     |> Maybe.map (\total -> ( c, total, cost.heuristicRemainingCost ))
             )
-        |> List.sortBy (\( c, total, hc ) -> (round total, hc))
+        |> List.sortBy (\( c, total, hc ) -> ( round total, hc ))
         |> List.head
         |> Maybe.map (\( c, _, hc ) -> c)
+
 
 neighbours : Terrain -> Coord -> List Coord
 neighbours terrain ( x, y ) =
@@ -168,3 +169,23 @@ iterate model it =
         best
             |> Maybe.andThen newCosts
             |> Maybe.map newIter
+
+
+tracePath : Coord -> Iteration -> List Coord -> List Coord
+tracePath coord it coords =
+    let
+        next = Dict.get coord it.costs
+               |> Maybe.andThen (\c -> c.parent)
+
+    in
+        case next of
+            Nothing -> coords
+            Just c -> tracePath c it (c :: coords)
+
+
+hasPath : Model -> Iteration -> Maybe (List Coord)
+hasPath model it =
+    if (Set.member model.goal it.closed) then
+        Just (tracePath model.goal it [])
+    else
+        Nothing
