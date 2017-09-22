@@ -15,11 +15,11 @@ type alias Coord =
 type alias Terrain =
     Dict Coord Tile
 
-type alias HeuristicCost = Int
+type alias HeuristicCost = Float
 
 -- Nothing = not walkable
 -- Just x = walkable with cost x
-type alias WalkCost = Maybe Int
+type alias WalkCost = Maybe Float
 
 type alias Cost =
     { parent: Maybe Coord

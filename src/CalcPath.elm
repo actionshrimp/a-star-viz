@@ -6,7 +6,7 @@ import Dict exposing (Dict)
 import Set exposing (Set)
 
 
-costValue : Cost -> Maybe Int
+costValue : Cost -> Maybe Float
 costValue cost =
     Maybe.map (\x -> x + cost.heuristicRemainingCost) cost.travelCost
 
@@ -20,11 +20,11 @@ bestOpen open costs =
         |> List.filterMap
             (\( c, cost ) ->
                 costValue cost
-                    |> Maybe.map (\tc -> ( c, tc, cost.heuristicRemainingCost ))
+                    |> Maybe.map (\total -> ( c, total, cost.heuristicRemainingCost ))
             )
-        |> List.sortBy (\( c, total, hc ) -> (total, hc))
+        |> List.sortBy (\( c, total, hc ) -> (round total, hc))
         |> List.head
-        |> Maybe.map (\( c, _, _ ) -> c)
+        |> Maybe.map (\( c, _, hc ) -> c)
 
 neighbours : Terrain -> Coord -> List Coord
 neighbours terrain ( x, y ) =
@@ -50,7 +50,7 @@ tileCost t =
             Nothing
 
 
-heuristicRemainingCost : Coord -> Coord -> Int
+heuristicRemainingCost : Coord -> Coord -> Float
 heuristicRemainingCost goal c =
     let
         ( gx, gy ) =
@@ -63,7 +63,6 @@ heuristicRemainingCost goal c =
             |> toFloat
             |> sqrt
             |> (*) 10
-            |> round
 
 
 travelCost : Terrain -> ( Maybe Coord, Cost ) -> Coord -> WalkCost
@@ -81,7 +80,6 @@ travelCost terrain ( parentCoord, parentCost ) ( x, y ) =
                             |> toFloat
                             |> sqrt
                             |> (*) 10
-                            |> round
                           )
                     )
                 )
