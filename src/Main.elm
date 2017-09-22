@@ -243,7 +243,7 @@ startAndGoal model =
                     ]
                     []
             )
-            [ ( model.goal, ("#" ++ Styles.complement0) )
+            [ ( model.goal, ("#" ++ Styles.complement4) )
             ]
 
 
@@ -319,8 +319,8 @@ progress model =
                             , SA.y (toString (y * dx))
                             , SA.width (toString dx)
                             , SA.height (toString dy)
-                            , SA.fillOpacity "0"
-                            , SA.stroke ("#" ++ Styles.secX1)
+                            , SA.fill ("#" ++ Styles.secX1)
+                            , SA.stroke ("#" ++ Styles.secX2)
                             ]
                             []
                     )
@@ -347,8 +347,8 @@ progress model =
                             , SA.y (toString (y * dx))
                             , SA.width (toString dx)
                             , SA.height (toString dy)
-                            , SA.fill ("#" ++ Styles.primary0)
-                            , SA.stroke ("#" ++ Styles.primary3)
+                            , SA.fill ("#" ++ Styles.complement2)
+                            , SA.stroke ("#" ++ Styles.complement3)
                             ]
                             []
                     )

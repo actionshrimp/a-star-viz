@@ -38,39 +38,22 @@ grey =
 
 
 --*** Primary color:
---
 
 
 primary0 =
     "FF9F4F"
 
 
-
--- rgb(255,159, 79) = rgba(255,159, 79,1) = rgb0(1,0.624,0.31)
-
-
 primary1 =
     "FFCDA4"
-
-
-
--- rgb(255,205,164) = rgba(255,205,164,1) = rgb0(1,0.804,0.643)
 
 
 primary2 =
     "FFB475"
 
 
-
--- rgb(255,180,117) = rgba(255,180,117,1) = rgb0(1,0.706,0.459)
-
-
 primary3 =
     "FF8B2B"
-
-
-
--- rgb(255,139, 43) = rgba(255,139, 43,1) = rgb0(1,0.545,0.169)
 
 
 primary4 =
@@ -78,42 +61,23 @@ primary4 =
 
 
 
--- rgb(255,116,  0) = rgba(255,116,  0,1) = rgb0(1,0.455,0)
---
 --*** Secondary color (1):
---
 
 
 secX0 =
     "FFC44F"
 
 
-
--- rgb(255,196, 79) = rgba(255,196, 79,1) = rgb0(1,0.769,0.31)
-
-
 secX1 =
     "FFE1A4"
-
-
-
--- rgb(255,225,164) = rgba(255,225,164,1) = rgb0(1,0.882,0.643)
 
 
 secX2 =
     "FFD175"
 
 
-
--- rgb(255,209,117) = rgba(255,209,117,1) = rgb0(1,0.82,0.459)
-
-
 secX3 =
     "FFB82B"
-
-
-
--- rgb(255,184, 43) = rgba(255,184, 43,1) = rgb0(1,0.722,0.169)
 
 
 secX4 =
@@ -121,42 +85,23 @@ secX4 =
 
 
 
--- rgb(255,170,  0) = rgba(255,170,  0,1) = rgb0(1,0.667,0)
---
 --*** Secondary color (2):
---
 
 
 secY0 =
     "FF4F4F"
 
 
-
--- rgb(255, 79, 79) = rgba(255, 79, 79,1) = rgb0(1,0.31,0.31)
-
-
 secY1 =
     "FFA4A4"
-
-
-
--- rgb(255,164,164) = rgba(255,164,164,1) = rgb0(1,0.643,0.643)
 
 
 secY2 =
     "FF7575"
 
 
-
--- rgb(255,117,117) = rgba(255,117,117,1) = rgb0(1,0.459,0.459)
-
-
 secY3 =
     "FF2B2B"
-
-
-
--- rgb(255, 43, 43) = rgba(255, 43, 43,1) = rgb0(1,0.169,0.169)
 
 
 secY4 =
@@ -164,42 +109,23 @@ secY4 =
 
 
 
--- rgb(255,  0,  0) = rgba(255,  0,  0,1) = rgb0(1,0,0)
---
 --*** Complement color:
---
 
 
 complement0 =
     "3FCACA"
 
 
-
--- rgb( 63,202,202) = rgba( 63,202,202,1) = rgb0(0.247,0.792,0.792)
-
-
 complement1 =
     "98EDED"
-
-
-
--- rgb(152,237,237) = rgba(152,237,237,1) = rgb0(0.596,0.929,0.929)
 
 
 complement2 =
     "65DCDC"
 
 
-
--- rgb(101,220,220) = rgba(101,220,220,1) = rgb0(0.396,0.863,0.863)
-
-
 complement3 =
     "1FB8B8"
-
-
-
--- rgb( 31,184,184) = rgba( 31,184,184,1) = rgb0(0.122,0.722,0.722)
 
 
 complement4 =
@@ -225,7 +151,7 @@ css =
                 , (qt "Helvetica Neue")
                 , "sans-serif"
                 ]
-            , fontSize (px 16)
+            , fontSize (px 14)
             , margin (px 0)
             , textAlign center
             , property "user-select" "none"
@@ -234,7 +160,7 @@ css =
             [ padding (em 1)
             ]
         , class Header
-            [ fontSize (em 2.2)
+            [ fontSize (em 2.6)
             , textAlign left
             , color (hex primary0)
             ]
@@ -265,9 +191,10 @@ css =
             ]
         , button
             [ backgroundImage none
-            , backgroundColor (hex secX2)
+            , backgroundColor (hex primary2)
             , display block
-            , border3 (px 2) solid (hex secX3)
+            , border3 (px 2) solid (hex primary3)
+            , color (rgba 0 0 0 0.8)
             , padding (em 0.5)
             , fontSize (em 1)
             , minWidth (em 10)
@@ -275,9 +202,9 @@ css =
             , fontWeight bold
             , outline none
             , disabled
-                [ backgroundColor (hex secX1)
+                [ backgroundColor (hex primary1)
                 , color (hex "CCCCCC")
-                , border3 (px 2) solid (hex secX2)
+                , border3 (px 2) solid (hex primary2)
                 ]
             ]
         ]
