@@ -68,24 +68,20 @@ heuristicRemainingCost goal c =
 
 travelCost : Terrain -> ( Maybe Coord, Cost ) -> Coord -> WalkCost
 travelCost terrain ( parentCoord, parentCost ) ( x, y ) =
-    let
-        _ =
-            Debug.log "parentCoord" parentCoord
-    in
-        Dict.get ( x, y ) terrain
-            |> Maybe.andThen tileCost
-            |> Maybe.map3
-                (\ptc ( px, py ) tc ->
-                    (ptc
-                        + (((px - x) ^ 2 + (py - y) ^ 2)
-                            |> toFloat
-                            |> sqrt
-                            |> (*) 10
-                          )
-                    )
+    Dict.get ( x, y ) terrain
+        |> Maybe.andThen tileCost
+        |> Maybe.map3
+            (\ptc ( px, py ) tc ->
+                (ptc
+                    + (((px - x) ^ 2 + (py - y) ^ 2)
+                        |> toFloat
+                        |> sqrt
+                        |> (*) 10
+                      )
                 )
-                parentCost.travelCost
-                parentCoord
+            )
+            parentCost.travelCost
+            parentCoord
 
 
 calcCost : Model -> ( Maybe Coord, Cost ) -> Coord -> ( Coord, Cost )
