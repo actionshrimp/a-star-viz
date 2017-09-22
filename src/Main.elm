@@ -5,6 +5,7 @@ import CalcPath
 import Styles
 import Dict exposing (Dict)
 import Set
+import Time
 import Html exposing (Html, text, div, img, h1, button)
 import Html.Events as E
 import Html.CssHelpers
@@ -18,19 +19,11 @@ import Svg.Attributes as SA
 
 ( terrainSize, terrain ) =
     let
+        ( w, h ) =
+            ( 30, 30 )
+
         terrainGrid =
-            [ [ E, E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E, E ]
-            , [ E, E, E, E, E, E, E, E, E, E, E ]
-            ]
+            List.repeat h (List.repeat w E)
 
         cols =
             terrainGrid
@@ -61,11 +54,14 @@ import Svg.Attributes as SA
 init : ( Model, Cmd Msg )
 init =
     let
+        ( rows, cols ) =
+            terrainSize
+
         start =
             ( 0, 0 )
 
         goal =
-            ( 10, 10 )
+            ( rows - 1, cols - 1 )
     in
         ( { terrain = terrain
           , start = start
@@ -79,6 +75,7 @@ init =
                 , closed = Set.empty
                 }
           , canIterate = True
+          , autoIterate = False
           }
         , Cmd.none
         )
@@ -93,6 +90,7 @@ type Msg
     | MouseEnter ( Int, Int )
     | MouseUp
     | Iterate
+    | ToggleAutoIterate
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -105,6 +103,8 @@ update msg model =
 
                 E ->
                     Rock
+
+        oldAutoIterate = model.autoIterate
     in
         case msg of
             MouseDown coord ->
@@ -151,6 +151,9 @@ update msg model =
                             { model | progress = it }
                 , Cmd.none
                 )
+
+            ToggleAutoIterate ->
+                ( { model | autoIterate = (not oldAutoIterate) }, Cmd.none )
 
 
 
@@ -309,46 +312,47 @@ progress model =
                             ]
                             []
                     )
-            , model.progress.costs
-                |> Dict.toList
-                |> List.concatMap
-                    (\( ( x, y ), cost ) ->
-                        [ Svg.text_
-                            [ SA.x (toString (x * dx + 5))
-                            , SA.y (toString (y * dy + 15))
-                            , SA.style "font-size: 10px"
-                            ]
-                            [ Svg.text
-                                (case cost.travelCost of
-                                    Nothing ->
-                                        "-"
 
-                                    Just x ->
-                                        (toString x)
-                                )
-                            ]
-                        , Svg.text_
-                            [ SA.x (toString (x * dx + dx - 15))
-                            , SA.y (toString (y * dy + 15))
-                            , SA.style "font-size: 10px"
-                            ]
-                            [ Svg.text (toString cost.heuristicRemainingCost) ]
-                        , Svg.text_
-                            [ SA.x (toString (x * dx + 5))
-                            , SA.y (toString (y * dy + dy - 5))
-                            , SA.style "font-size: 10px"
-                            ]
-                            [ Svg.text
-                                (case (CalcPath.costValue cost) of
-                                    Nothing ->
-                                        "-"
-
-                                    Just x ->
-                                        (toString x)
-                                )
-                            ]
-                        ]
-                    )
+            --            , model.progress.costs
+            --                |> Dict.toList
+            --                |> List.concatMap
+            --                    (\( ( x, y ), cost ) ->
+            --                        [ Svg.text_
+            --                            [ SA.x (toString (x * dx + 5))
+            --                            , SA.y (toString (y * dy + 15))
+            --                            , SA.style "font-size: 10px"
+            --                            ]
+            --                            [ Svg.text
+            --                                (case cost.travelCost of
+            --                                    Nothing ->
+            --                                        "-"
+            --
+            --                                    Just x ->
+            --                                     (toString (round x))
+            --                                )
+            --                            ]
+            --                        , Svg.text_
+            --                            [ SA.x (toString (x * dx + dx - 15))
+            --                            , SA.y (toString (y * dy + 15))
+            --                            , SA.style "font-size: 10px"
+            --                            ]
+            --                            [ Svg.text (toString (round cost.heuristicRemainingCost)) ]
+            --                        , Svg.text_
+            --                            [ SA.x (toString (x * dx + 5))
+            --                            , SA.y (toString (y * dy + dy - 5))
+            --                            , SA.style "font-size: 10px"
+            --                            ]
+            --                            [ Svg.text
+            --                                (case (CalcPath.costValue cost) of
+            --                                    Nothing ->
+            --                                        "-"
+            --
+            --                                    Just x ->
+            --                                        (toString (round x))
+            --                                )
+            --                            ]
+            --                        ]
+            --                    )
             ]
 
 
@@ -376,15 +380,30 @@ view : Model -> Html Msg
 view model =
     div [ id [ Styles.Page ] ]
         [ h1 [] [ (Html.text "Pathfinder") ]
-        , button
-            [ (E.onClick Iterate)
-            , (HA.disabled (not model.canIterate))
+        , div []
+            [ button
+                [ (E.onClick Iterate)
+                , (HA.disabled (not model.canIterate))
+                ]
+                [ (Html.text "Iterate") ]
+            , button
+                [ (E.onClick ToggleAutoIterate)
+                , (HA.disabled (not model.canIterate))
+                ]
+                [ (Html.text (if model.autoIterate then "Stop Auto" else "Auto")) ]
             ]
-            [ (Html.text "Iterate") ]
         , div [ class [ Styles.Container ] ]
             [ svgGrid model
             ]
         ]
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    if model.autoIterate then
+        Time.every (Time.millisecond * 50) (always Iterate)
+    else
+        Sub.none
 
 
 
@@ -397,5 +416,5 @@ main =
         { view = view
         , init = init
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         }

@@ -42,5 +42,6 @@ type alias Model =
     , dragging : Maybe Tile
     , progress : Iteration
     , canIterate : Bool
+    , autoIterate : Bool
     }
 
