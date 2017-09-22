@@ -343,47 +343,6 @@ progress model =
                             ]
                             []
                     )
-
-            --            , model.progress.costs
-            --                |> Dict.toList
-            --                |> List.concatMap
-            --                    (\( ( x, y ), cost ) ->
-            --                        [ Svg.text_
-            --                            [ SA.x (toString (x * dx + 5))
-            --                            , SA.y (toString (y * dy + 15))
-            --                            , SA.style "font-size: 10px"
-            --                            ]
-            --                            [ Svg.text
-            --                                (case cost.travelCost of
-            --                                    Nothing ->
-            --                                        "-"
-            --
-            --                                    Just x ->
-            --                                     (toString (round x))
-            --                                )
-            --                            ]
-            --                        , Svg.text_
-            --                            [ SA.x (toString (x * dx + dx - 15))
-            --                            , SA.y (toString (y * dy + 15))
-            --                            , SA.style "font-size: 10px"
-            --                            ]
-            --                            [ Svg.text (toString (round cost.heuristicRemainingCost)) ]
-            --                        , Svg.text_
-            --                            [ SA.x (toString (x * dx + 5))
-            --                            , SA.y (toString (y * dy + dy - 5))
-            --                            , SA.style "font-size: 10px"
-            --                            ]
-            --                            [ Svg.text
-            --                                (case (CalcPath.costValue cost) of
-            --                                    Nothing ->
-            --                                        "-"
-            --
-            --                                    Just x ->
-            --                                        (toString (round x))
-            --                                )
-            --                            ]
-            --                        ]
-            --                    )
             ]
 
 
