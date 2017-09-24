@@ -202,7 +202,7 @@ css =
             , color (rgba 0 0 0 0.8)
             , padding (em 0.5)
             , fontSize (em 1)
-            , minWidth (em 10)
+            , minWidth (em 15)
             , marginBottom (em 1)
             , fontWeight bold
             , outline none

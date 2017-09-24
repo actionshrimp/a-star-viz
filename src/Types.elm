@@ -44,5 +44,6 @@ type alias Model =
     , canIterate : Bool
     , autoIterate : Bool
     , showConnections : Bool
+    , terrainSize : ( Int, Int )
     }
 

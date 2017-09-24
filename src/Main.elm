@@ -5,6 +5,8 @@ import CalcPath
 import Styles
 import Dict exposing (Dict)
 import Set
+import Generate
+import Random
 import Time
 import Html exposing (Html, text, div, img, h1, button, input, label)
 import Html.Events as E
@@ -36,19 +38,23 @@ import Svg.Attributes as SA
                 |> List.length
     in
         ( ( rows, cols )
-        , (terrainGrid
-            |> List.indexedMap
-                (\y row ->
-                    List.indexedMap
-                        (\x tile ->
-                            ( ( x, y ), tile )
-                        )
-                        row
-                )
-            |> List.concat
-            |> Dict.fromList
-          )
+        , gridToTerrain terrainGrid
         )
+
+
+gridToTerrain : List (List Tile) -> Dict Coord Tile
+gridToTerrain terrainGrid =
+    terrainGrid
+        |> List.indexedMap
+            (\y row ->
+                List.indexedMap
+                    (\x tile ->
+                        ( ( x, y ), tile )
+                    )
+                    row
+            )
+        |> List.concat
+        |> Dict.fromList
 
 
 init : ( Model, Cmd Msg )
@@ -64,6 +70,7 @@ init =
             ( rows - 1, cols - 1 )
     in
         ( { terrain = terrain
+          , terrainSize = terrainSize
           , start = start
           , goal = goal
           , path = Nothing
@@ -95,6 +102,8 @@ type Msg
     | ResetTerrain
     | ResetProgress
     | ToggleShowConnections
+    | GenerateRandomTerrain
+    | UpdateTerrain (List (List Tile))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -190,6 +199,18 @@ update msg model =
                         init
                 in
                     ( { model | terrain = initial.terrain }, Cmd.none )
+
+            GenerateRandomTerrain ->
+                ( model, Random.generate UpdateTerrain (Generate.generateRandom terrainSize 0.3) )
+
+            UpdateTerrain newTerrain ->
+                ( { model
+                    | terrain =
+                        newTerrain
+                            |> gridToTerrain
+                  }
+                , Cmd.none
+                )
 
 
 
@@ -390,7 +411,7 @@ pathConnections model =
                                             )
                             )
                 )
-               |> Maybe.withDefault []
+            |> Maybe.withDefault []
 
 
 progress : Model -> List (Svg Msg)
@@ -478,9 +499,12 @@ view model =
                 ]
             , div [ class [ Styles.Sidebar ] ]
                 [ label [ class [ Styles.ToggleOption ] ]
-                    [ input [ HA.type_ "checkbox"
-                            , E.onClick ToggleShowConnections
-                            , HA.checked model.showConnections ] []
+                    [ input
+                        [ HA.type_ "checkbox"
+                        , E.onClick ToggleShowConnections
+                        , HA.checked model.showConnections
+                        ]
+                        []
                     , Html.text "Show connections"
                     ]
                 , button
@@ -491,6 +515,10 @@ view model =
                     [ (E.onClick ResetTerrain)
                     ]
                     [ (Html.text "Reset terrain") ]
+                , button
+                    [ (E.onClick GenerateRandomTerrain)
+                    ]
+                    [ (Html.text "Gen random terrain") ]
                 , button
                     [ (E.onClick Iterate)
                     , (HA.disabled (not model.canIterate))
