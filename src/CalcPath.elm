@@ -172,7 +172,7 @@ tracePath coord it coords =
     let
         next =
             Dict.get coord it.costs
-                |> Maybe.andThen (\c -> c.parent)
+                |> Maybe.andThen .parent
     in
         case next of
             Nothing ->
