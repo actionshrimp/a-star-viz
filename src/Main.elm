@@ -57,6 +57,13 @@ gridToTerrain terrainGrid =
         |> Dict.fromList
 
 
+removeEndpoints : Model -> Dict Coord Tile -> Dict Coord Tile
+removeEndpoints { start, goal } terrain =
+    terrain
+        |> Dict.update start (Maybe.map (always E))
+        |> Dict.update goal (Maybe.map (always E))
+
+
 init : ( Model, Cmd Msg )
 init =
     let
@@ -208,6 +215,7 @@ update msg model =
                     | terrain =
                         newTerrain
                             |> gridToTerrain
+                            |> removeEndpoints model
                   }
                 , Cmd.none
                 )
