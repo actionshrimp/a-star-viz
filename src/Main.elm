@@ -144,6 +144,8 @@ update msg model =
                         | terrain = (Dict.insert coord targetTile model.terrain)
                         , dragging = (Just targetTile)
                       }
+                        |> update ResetProgress
+                        |> Tuple.first
                     , Cmd.none
                     )
 
@@ -217,7 +219,11 @@ update msg model =
                     ( initial, _ ) =
                         init
                 in
-                    ( { model | terrain = initial.terrain }, Cmd.none )
+                    ( { model | terrain = initial.terrain }
+                        |> update ResetProgress
+                        |> Tuple.first
+                    , Cmd.none
+                    )
 
             GenerateRandomTerrain ->
                 ( model, Random.generate UpdateTerrain (Generate.generateRandom terrainSize 0.3) )
@@ -229,6 +235,8 @@ update msg model =
                             |> gridToTerrain
                             |> removeEndpoints model
                   }
+                    |> update ResetProgress
+                    |> Tuple.first
                 , Cmd.none
                 )
 
