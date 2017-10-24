@@ -8,6 +8,7 @@ import Set
 import Generate
 import Random
 import Time
+import Tuple
 import Html exposing (Html, text, div, img, h1, button, input, label)
 import Html.Events as E
 import Html.CssHelpers
@@ -90,6 +91,7 @@ init =
                 }
           , canIterate = True
           , autoIterate = False
+          , resetting = False
           , showConnections = False
           }
         , Cmd.none
@@ -165,6 +167,8 @@ update msg model =
             Iterate ->
                 ( if not model.canIterate then
                     model
+                  else if model.resetting then
+                    { model | resetting = False }
                   else
                     let
                         next =
@@ -203,6 +207,7 @@ update msg model =
                         , canIterate = initial.canIterate
                         , path = initial.path
                         , autoIterate = initial.autoIterate
+                        , resetting = True
                       }
                     , Cmd.none
                     )
