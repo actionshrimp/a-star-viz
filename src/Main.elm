@@ -198,7 +198,14 @@ update msg model =
                     ( initial, _ ) =
                         init
                 in
-                    ( { model | progress = initial.progress, canIterate = initial.canIterate, path = initial.path, autoIterate = initial.autoIterate }, Cmd.none )
+                    ( { model
+                        | progress = initial.progress
+                        , canIterate = initial.canIterate
+                        , path = initial.path
+                        , autoIterate = initial.autoIterate
+                      }
+                    , Cmd.none
+                    )
 
             ResetTerrain ->
                 let
