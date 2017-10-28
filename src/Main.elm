@@ -91,22 +91,23 @@ init =
                 }
           , canIterate = True
           , autoIterate = False
-          , resetting = False
           , showConnections = False
           }
         , Cmd.none
         )
 
 
-
 ---- UPDATE ----
 
+type AutoManual
+    = Auto
+    | Manual
 
 type Msg
     = MouseDown ( Int, Int )
     | MouseEnter ( Int, Int )
     | MouseUp
-    | Iterate
+    | Iterate AutoManual
     | ToggleAutoIterate
     | ResetTerrain
     | ResetProgress
@@ -166,11 +167,11 @@ update msg model =
                 , Cmd.none
                 )
 
-            Iterate ->
+            Iterate am ->
                 ( if not model.canIterate then
                     model
-                  else if model.resetting then
-                    { model | resetting = False }
+                  else if am == Auto && (not model.autoIterate) then
+                           model
                   else
                     let
                         next =
@@ -189,6 +190,11 @@ update msg model =
                             | canIterate = canIterate
                             , path = path
                             , progress = progress
+                            , autoIterate = if model.autoIterate then
+                                                case am of
+                                                    Auto -> True
+                                                    Manual -> False
+                                            else False
                         }
                 , Cmd.none
                 )
@@ -207,9 +213,8 @@ update msg model =
                     ( { model
                         | progress = initial.progress
                         , canIterate = initial.canIterate
+                        , autoIterate = False
                         , path = initial.path
-                        , autoIterate = initial.autoIterate
-                        , resetting = True
                       }
                     , Cmd.none
                     )
@@ -548,7 +553,7 @@ view model =
                     ]
                     [ (Html.text "Gen random terrain") ]
                 , button
-                    [ (E.onClick Iterate)
+                    [ (E.onClick (Iterate Manual))
                     , (HA.disabled (not model.canIterate))
                     ]
                     [ (Html.text "Step") ]
@@ -572,7 +577,7 @@ view model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     if (model.canIterate && model.autoIterate) then
-        Time.every (Time.millisecond * 2) (always Iterate)
+        Time.every (Time.millisecond * 2) (always (Iterate Auto))
     else
         Sub.none
 
