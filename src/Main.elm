@@ -8,7 +8,6 @@ import Set
 import Generate
 import Random
 import Time
-import Tuple
 import Html exposing (Html, text, div, img, h1, button, input, label)
 import Html.Events as E
 import Html.CssHelpers
@@ -118,6 +117,18 @@ type Msg
     | GenerateRandomTerrain
     | UpdateTerrain (List (List Tile))
 
+resetProgress : Model -> Model
+resetProgress model =
+                let
+                    ( initial, _ ) =
+                        init
+                in
+                    { model
+                        | progress = initial.progress
+                        , canIterate = initial.canIterate
+                        , autoIterate = False
+                        , path = initial.path
+                    }
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -214,16 +225,7 @@ update msg model =
                 ( { model | showConnections = (not oldShowConnections) }, Cmd.none )
 
             ResetProgress ->
-                let
-                    ( initial, _ ) =
-                        init
-                in
-                    ( { model
-                        | progress = initial.progress
-                        , canIterate = initial.canIterate
-                        , autoIterate = False
-                        , path = initial.path
-                      }
+                    ( resetProgress model
                     , Cmd.none
                     )
 
@@ -233,8 +235,7 @@ update msg model =
                         init
                 in
                     ( { model | terrain = initial.terrain }
-                        |> update ResetProgress
-                        |> Tuple.first
+                        |> resetProgress
                     , Cmd.none
                     )
 
@@ -248,8 +249,7 @@ update msg model =
                             |> gridToTerrain
                             |> removeEndpoints model
                   }
-                    |> update ResetProgress
-                    |> Tuple.first
+                    |> resetProgress
                 , Cmd.none
                 )
 
