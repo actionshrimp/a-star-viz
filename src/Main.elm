@@ -97,11 +97,14 @@ init =
         )
 
 
+
 ---- UPDATE ----
+
 
 type AutoManual
     = Auto
     | Manual
+
 
 type Msg
     = MouseDown ( Int, Int )
@@ -171,7 +174,7 @@ update msg model =
                 ( if not model.canIterate then
                     model
                   else if am == Auto && (not model.autoIterate) then
-                           model
+                    model
                   else
                     let
                         next =
@@ -185,16 +188,21 @@ update msg model =
 
                         progress =
                             Maybe.withDefault model.progress next
+
+                        autoIterate =
+                            model.autoIterate
+                                && case am of
+                                    Auto ->
+                                        True
+
+                                    Manual ->
+                                        False
                     in
                         { model
                             | canIterate = canIterate
                             , path = path
                             , progress = progress
-                            , autoIterate = if model.autoIterate then
-                                                case am of
-                                                    Auto -> True
-                                                    Manual -> False
-                                            else False
+                            , autoIterate = autoIterate
                         }
                 , Cmd.none
                 )
