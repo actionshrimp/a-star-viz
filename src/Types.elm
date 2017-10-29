@@ -47,3 +47,32 @@ type alias Model =
     , terrainSize : ( Int, Int )
     }
 
+type AutoManual
+    = Auto
+    | Manual
+
+
+type Msg
+    = MouseDown ( Int, Int )
+    | MouseEnter ( Int, Int )
+    | MouseUp
+    | Iterate AutoManual
+    | ToggleAutoIterate
+    | ResetTerrain
+    | ResetProgress
+    | ToggleShowConnections
+    | GenerateRandomTerrain
+    | UpdateTerrain (List (List Tile))
+
+calcDeltas : Model -> ( Int, Int )
+calcDeltas model =
+    let
+        ( w, h ) =
+            model.svgSize
+
+        ( rows, cols ) =
+            model.terrainSize
+    in
+        ( w // rows
+        , h // cols
+        )
