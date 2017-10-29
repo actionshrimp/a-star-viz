@@ -8,6 +8,7 @@ import Set
 import Generate
 import Random
 import Time
+import Grid
 import Html exposing (Html, text, div, img, h1, button, input, label)
 import Html.Events as E
 import Html.CssHelpers
@@ -19,50 +20,14 @@ import Svg.Attributes as SA
 ---- MODEL ----
 
 
-( terrainSize, terrain ) =
-    let
-        ( w, h ) =
-            ( 32, 32 )
-
-        terrainGrid =
-            List.repeat h (List.repeat w E)
-
-        cols =
-            terrainGrid
-                |> List.head
-                |> Maybe.withDefault []
-                |> List.length
-
-        rows =
-            terrainGrid
-                |> List.length
-    in
-        ( ( rows, cols )
-        , gridToTerrain terrainGrid
-        )
+terrainSize : (Int, Int)
+terrainSize =
+    ( 32, 32 )
 
 
-gridToTerrain : List (List Tile) -> Dict Coord Tile
-gridToTerrain terrainGrid =
-    terrainGrid
-        |> List.indexedMap
-            (\y row ->
-                List.indexedMap
-                    (\x tile ->
-                        ( ( x, y ), tile )
-                    )
-                    row
-            )
-        |> List.concat
-        |> Dict.fromList
-
-
-removeEndpoints : Model -> Dict Coord Tile -> Dict Coord Tile
-removeEndpoints { start, goal } terrain =
-    terrain
-        |> Dict.update start (Maybe.map (always E))
-        |> Dict.update goal (Maybe.map (always E))
-
+terrain : Dict Coord Tile
+terrain =
+    Grid.emptyGrid terrainSize
 
 init : ( Model, Cmd Msg )
 init =
@@ -117,18 +82,20 @@ type Msg
     | GenerateRandomTerrain
     | UpdateTerrain (List (List Tile))
 
+
 resetProgress : Model -> Model
 resetProgress model =
-                let
-                    ( initial, _ ) =
-                        init
-                in
-                    { model
-                        | progress = initial.progress
-                        , canIterate = initial.canIterate
-                        , autoIterate = False
-                        , path = initial.path
-                    }
+    let
+        ( initial, _ ) =
+            init
+    in
+        { model
+            | progress = initial.progress
+            , canIterate = initial.canIterate
+            , autoIterate = False
+            , path = initial.path
+        }
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -225,9 +192,9 @@ update msg model =
                 ( { model | showConnections = (not oldShowConnections) }, Cmd.none )
 
             ResetProgress ->
-                    ( resetProgress model
-                    , Cmd.none
-                    )
+                ( resetProgress model
+                , Cmd.none
+                )
 
             ResetTerrain ->
                 let
@@ -246,8 +213,8 @@ update msg model =
                 ( { model
                     | terrain =
                         newTerrain
-                            |> gridToTerrain
-                            |> removeEndpoints model
+                            |> Grid.gridToTerrain
+                            |> Grid.removeEndpoints model
                   }
                     |> resetProgress
                 , Cmd.none
