@@ -22,7 +22,7 @@ neighbours map ( x, y ) =
     , ( x, y + 1 )
     , ( x, y - 1 )
     ]
-        |> List.filter (\c -> Dict.get c map.tiles /= Nothing)
+        |> List.filter (\c -> Dict.member c map.tiles)
 
 
 tileCost : Tile -> Maybe Float
