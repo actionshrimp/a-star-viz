@@ -63,12 +63,14 @@ clickListeners ( dx, dy ) model =
                           , SA.fillOpacity "0"
                           , E.onMouseDown (MouseDown ( x, y ))
                           ]
-                        , if (model.dragging /= Nothing) then
-                            [ E.onMouseEnter (MouseEnter ( x, y ))
-                            , E.onMouseUp MouseUp
-                            ]
-                          else
-                            []
+                        , case model.dragging of
+                            Nothing ->
+                                []
+
+                            Just _ ->
+                                [ E.onMouseEnter (MouseEnter ( x, y ))
+                                , E.onMouseUp MouseUp
+                                ]
                         ]
                     )
                     []
