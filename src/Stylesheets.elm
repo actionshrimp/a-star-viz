@@ -12,6 +12,7 @@ fileStructure =
     Css.File.toFileStructure
         [ ( "src/main.css", Css.File.compile [ Styles.css ] ) ]
 
+
 main : CssCompilerProgram
 main =
     Css.File.compiler files fileStructure

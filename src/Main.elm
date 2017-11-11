@@ -1,62 +1,39 @@
 module Main exposing (..)
 
-import Types exposing (..)
-import CalcPath
-import Styles
-import Grid
-import Render exposing (svgGrid)
-
 import Dict exposing (Dict)
-import Set
-import Generate
-import Random
-import Time
+import Grid
 import Html exposing (Html, text, div, img, h1, button, input, label)
-import Html.Events as E
-import Html.CssHelpers
 import Html.Attributes as HA
+import Html.CssHelpers
+import Html.Events as E
+import Map
+import Random
+import Render exposing (svgGrid)
+import Styles
+import Time
+import Types exposing (..)
 
 
 ---- MODEL ----
 
 
-terrainSize : ( Int, Int )
-terrainSize =
+mapSize : ( Int, Int )
+mapSize =
     ( 32, 32 )
-
-
-terrain : Dict Coord Tile
-terrain =
-    Grid.emptyGrid terrainSize
 
 
 init : ( Model, Cmd Msg )
 init =
     let
-        ( rows, cols ) =
-            terrainSize
-
-        start =
-            ( 0, 0 )
-
-        goal =
-            ( rows - 1, cols - 1 )
+        map =
+            Map.emptyMap mapSize
     in
-        ( { terrain = terrain
-          , terrainSize = terrainSize
-          , start = start
-          , goal = goal
-          , path = Nothing
-          , svgSize = ( 512, 512 )
+        ( { svgSize = ( 512, 512 )
           , dragging = Nothing
-          , progress =
-                { open = Set.fromList ([ start ])
-                , costs = Dict.fromList [ ( start, CalcPath.startCost goal start ) ]
-                , closed = Set.empty
-                }
-          , canIterate = True
           , autoIterate = False
           , showConnections = False
+          , map = map
+          , grids = [ Grid.initGridState map ]
           }
         , Cmd.none
         )
@@ -73,42 +50,33 @@ resetProgress model =
             init
     in
         { model
-            | progress = initial.progress
-            , canIterate = initial.canIterate
-            , autoIterate = False
-            , path = initial.path
+            | autoIterate = False
+            , grids = [ Grid.initGridState model.map ]
         }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
-        toggleTerrain t =
-            case t of
-                Rock ->
-                    E
-
-                E ->
-                    Rock
-
         oldAutoIterate =
             model.autoIterate
 
         oldShowConnections =
             model.showConnections
+
+        oldMap =
+            model.map
     in
         case msg of
             MouseDown coord ->
                 let
                     targetTile =
-                        (Dict.get coord model.terrain)
+                        (Dict.get coord model.map.tiles)
                             |> Maybe.withDefault E
                             |> toggleTerrain
                 in
-                    ( { model
-                        | terrain = (Dict.insert coord targetTile model.terrain)
-                        , dragging = (Just targetTile)
-                      }
+                    ( { model | dragging = (Just targetTile) }
+                        |> updateTiles (Dict.insert coord targetTile)
                         |> update ResetProgress
                         |> Tuple.first
                     , Cmd.none
@@ -120,7 +88,8 @@ update msg model =
                         model
 
                     Just t ->
-                        { model | terrain = (Dict.insert coord t model.terrain) }
+                        model
+                            |> updateTiles (Dict.insert coord t)
                 , Cmd.none
                 )
 
@@ -132,24 +101,14 @@ update msg model =
                 )
 
             Iterate am ->
-                ( if not model.canIterate then
+                ( if not (List.any .canIterate model.grids) then
                     model
                   else if am == Auto && (not model.autoIterate) then
+                    -- This happens when the timer subscription fires for the
+                    -- last time or two after autoIterate has been turned off
                     model
                   else
                     let
-                        next =
-                            CalcPath.iterate model model.progress
-
-                        path =
-                            next |> Maybe.andThen (CalcPath.hasPath model)
-
-                        canIterate =
-                            next /= Nothing && path == Nothing
-
-                        progress =
-                            Maybe.withDefault model.progress next
-
                         autoIterate =
                             model.autoIterate
                                 && case am of
@@ -160,9 +119,7 @@ update msg model =
                                         False
                     in
                         { model
-                            | canIterate = canIterate
-                            , path = path
-                            , progress = progress
+                            | grids = List.map (Grid.iterate model.map) model.grids
                             , autoIterate = autoIterate
                         }
                 , Cmd.none
@@ -179,26 +136,29 @@ update msg model =
                 , Cmd.none
                 )
 
-            ResetTerrain ->
+            ResetTiles ->
                 let
                     ( initial, _ ) =
                         init
                 in
-                    ( { model | terrain = initial.terrain }
+                    ( model
+                        |> updateTiles (always initial.map.tiles)
                         |> resetProgress
                     , Cmd.none
                     )
 
-            GenerateRandomTerrain ->
-                ( model, Random.generate UpdateTerrain (Generate.generateRandom terrainSize 0.3) )
+            GenerateRandomTiles ->
+                ( model, Random.generate UpdateTiles (Map.generateRandom mapSize 0.3) )
 
-            UpdateTerrain newTerrain ->
-                ( { model
-                    | terrain =
-                        newTerrain
-                            |> Grid.gridToTerrain
-                            |> Grid.removeEndpoints model
-                  }
+            UpdateTiles newTiles ->
+                ( model
+                    |> updateTiles
+                        (always
+                            (newTiles
+                                |> Map.toTiles
+                                |> Map.removeEndpoints model.map
+                            )
+                        )
                     |> resetProgress
                 , Cmd.none
                 )
@@ -210,8 +170,6 @@ update msg model =
 
 { id, class, classList } =
     Html.CssHelpers.withNamespace Styles.ns
-
-
 
 
 view : Model -> Html Msg
@@ -238,24 +196,24 @@ view model =
                     ]
                     [ (Html.text "Reset progress") ]
                 , button
-                    [ (E.onClick ResetTerrain)
+                    [ (E.onClick ResetTiles)
                     ]
-                    [ (Html.text "Reset terrain") ]
+                    [ (Html.text "Reset tiles") ]
                 , button
-                    [ (E.onClick GenerateRandomTerrain)
+                    [ (E.onClick GenerateRandomTiles)
                     ]
                     [ (Html.text "Gen random terrain") ]
                 , button
                     [ (E.onClick (Iterate Manual))
-                    , (HA.disabled (not model.canIterate))
+                    , (HA.disabled (not (canIterate model)))
                     ]
                     [ (Html.text "Step") ]
                 , button
                     [ (E.onClick ToggleAutoIterate)
-                    , (HA.disabled (not model.canIterate))
+                    , (HA.disabled (not (canIterate model)))
                     ]
                     [ (Html.text
-                        (if (model.canIterate && model.autoIterate) then
+                        (if (canIterate model && model.autoIterate) then
                             "Stop"
                          else
                             "Solve"
@@ -269,7 +227,7 @@ view model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    if (model.canIterate && model.autoIterate) then
+    if (canIterate model && model.autoIterate) then
         Time.every (Time.millisecond * 2) (always (Iterate Auto))
     else
         Sub.none

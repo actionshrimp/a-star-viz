@@ -3,49 +3,62 @@ module Types exposing (..)
 import Dict exposing (Dict)
 import Set exposing (Set)
 
-type Hole = Hole
+
+type Hole
+    = Hole
+
 
 type Tile
     = E -- empty
     | Rock
 
+
 type alias Coord =
     ( Int, Int )
 
-type alias Terrain =
-    Dict Coord Tile
 
-type alias HeuristicCost = Float
+type Parent
+    = IsStart
+    | Parent Coord
 
--- Nothing = not walkable
--- Just x = walkable with cost x
-type alias WalkCost = Maybe Float
 
 type alias Cost =
-    { parent: Maybe Coord
-    , heuristicRemainingCost: HeuristicCost
-    , travelCost: WalkCost
+    { parent : Parent
+    , heuristicScore : Float
+    , walkScore : Float
     }
 
-type alias Iteration =
-    { open: Set Coord
-    , closed: Set Coord
-    , costs: Dict Coord Cost
+
+type alias GridState =
+    { open : Set Coord
+    , closed : Set Coord
+    , costs : Dict Coord Cost
+    , path : Maybe (List Coord)
+    , canIterate : Bool
     }
+
+
+type alias Tiles =
+    Dict Coord Tile
+
+
+type alias Map =
+    { start : Coord
+    , goal : Coord
+    , size : ( Int, Int )
+    , tiles : Tiles
+    }
+
 
 type alias Model =
-    { terrain : Terrain
-    , start : Coord
-    , goal : Coord
-    , path : Maybe (List Coord)
-    , svgSize : ( Int, Int )
+    { svgSize : ( Int, Int )
     , dragging : Maybe Tile
-    , progress : Iteration
-    , canIterate : Bool
     , autoIterate : Bool
     , showConnections : Bool
-    , terrainSize : ( Int, Int )
+    , grids : List GridState
+    , map : Map
     }
+
 
 type AutoManual
     = Auto
@@ -58,11 +71,12 @@ type Msg
     | MouseUp
     | Iterate AutoManual
     | ToggleAutoIterate
-    | ResetTerrain
+    | ResetTiles
     | ResetProgress
     | ToggleShowConnections
-    | GenerateRandomTerrain
-    | UpdateTerrain (List (List Tile))
+    | GenerateRandomTiles
+    | UpdateTiles (List (List Tile))
+
 
 calcDeltas : Model -> ( Int, Int )
 calcDeltas model =
@@ -71,8 +85,35 @@ calcDeltas model =
             model.svgSize
 
         ( rows, cols ) =
-            model.terrainSize
+            model.map.size
     in
         ( w // rows
         , h // cols
         )
+
+
+canIterate : Model -> Bool
+canIterate m =
+    List.any .canIterate m.grids
+
+
+updateTiles : (Tiles -> Tiles) -> Model -> Model
+updateTiles f model =
+    let
+        oldMap =
+            model.map
+
+        oldTiles =
+            model.map.tiles
+    in
+        { model | map = { oldMap | tiles = (f oldTiles) } }
+
+
+toggleTerrain : Tile -> Tile
+toggleTerrain t =
+    case t of
+        Rock ->
+            E
+
+        E ->
+            Rock

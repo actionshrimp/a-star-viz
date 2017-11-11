@@ -1,43 +1,36 @@
 module Render exposing (..)
 
 import Dict exposing (Dict)
+import Html.Events as E
 import Set
-import Types exposing (..)
 import Styles
 import Svg exposing (Svg, svg)
 import Svg.Attributes as SA
-import Html.Events as E
+import Types exposing (..)
 
 
-startAndGoal : Model -> List (Svg Msg)
-startAndGoal model =
+startAndGoal : ( Int, Int ) -> Map -> List (Svg Msg)
+startAndGoal ( dx, dy ) map =
+    List.map
+        (\( ( x, y ), color ) ->
+            Svg.rect
+                [ SA.x (toString (x * dx))
+                , SA.y (toString (y * dy))
+                , SA.width (toString dx)
+                , SA.height (toString dy)
+                , SA.fill color
+                ]
+                []
+        )
+        [ ( map.goal, ("#" ++ Styles.complement4) )
+        ]
+
+
+cellPoints : ( Int, Int ) -> Map -> List (Svg a)
+cellPoints ( dx, dy ) map =
     let
-        ( dx, dy ) =
-            calcDeltas model
-    in
-        List.map
-            (\( ( x, y ), color ) ->
-                Svg.rect
-                    [ SA.x (toString (x * dx))
-                    , SA.y (toString (y * dy))
-                    , SA.width (toString dx)
-                    , SA.height (toString dy)
-                    , SA.fill color
-                    ]
-                    []
-            )
-            [ ( model.goal, ("#" ++ Styles.complement4) )
-            ]
-
-
-cellPoints : Model -> List (Svg a)
-cellPoints model =
-    let
-        ( dx, dy ) =
-            calcDeltas model
-
         terrainList =
-            Dict.toList model.terrain
+            Dict.toList map.tiles
     in
         List.map
             (\( ( x, y ), tile ) ->
@@ -53,14 +46,11 @@ cellPoints model =
             terrainList
 
 
-clickListeners : Model -> List (Svg Msg)
-clickListeners model =
+clickListeners : ( Int, Int ) -> Model -> List (Svg Msg)
+clickListeners ( dx, dy ) model =
     let
-        ( dx, dy ) =
-            calcDeltas model
-
         terrainList =
-            Dict.toList model.terrain
+            Dict.toList model.map.tiles
     in
         List.map
             (\( ( x, y ), tile ) ->
@@ -86,158 +76,144 @@ clickListeners model =
             terrainList
 
 
-rocks : Model -> List (Svg Msg)
-rocks model =
-    let
-        ( dx, dy ) =
-            calcDeltas model
-    in
-        model.terrain
-            |> Dict.toList
-            |> List.filter (\( c, t ) -> t == Rock)
+rocks : ( Int, Int ) -> Map -> List (Svg Msg)
+rocks ( dx, dy ) map =
+    map.tiles
+        |> Dict.toList
+        |> List.filter (\( c, t ) -> t == Rock)
+        |> List.map
+            (\( ( x, y ), tile ) ->
+                Svg.rect
+                    [ SA.x (toString (x * dx))
+                    , SA.y (toString (y * dy))
+                    , SA.width (toString dx)
+                    , SA.height (toString dy)
+                    , SA.fill ("#" ++ Styles.secY0)
+                    , SA.stroke ("#" ++ Styles.secY3)
+                    ]
+                    []
+            )
+
+
+connections : ( Int, Int ) -> GridState -> List (Svg Msg)
+connections ( dx, dy ) gs =
+    List.concat
+        [ gs.open |> Set.toList
+        , gs.closed |> Set.toList
+        ]
+        |> List.filterMap
+            (\c ->
+                let
+                    ( x, y ) =
+                        c
+                in
+                    Dict.get c gs.costs
+                        |> Maybe.andThen
+                            (\cost ->
+                                case cost.parent of
+                                    IsStart ->
+                                        Nothing
+
+                                    Parent ( px, py ) ->
+                                        Just
+                                            (Svg.line
+                                                [ SA.x1 (toString (x * dx + dx // 2))
+                                                , SA.y1 (toString (y * dy + dy // 2))
+                                                , SA.x2 (toString (px * dx + dx // 2))
+                                                , SA.y2 (toString (py * dy + dy // 2))
+                                                , SA.stroke ("#" ++ Styles.secX4)
+                                                , SA.strokeOpacity "0.5"
+                                                , SA.strokeWidth "4"
+                                                ]
+                                                []
+                                            )
+                            )
+            )
+
+
+pathConnections : ( Int, Int ) -> GridState -> List (Svg Msg)
+pathConnections ( dx, dy ) gs =
+    gs.path
+        |> Maybe.map
+            (\path ->
+                path
+                    |> List.filterMap
+                        (\c ->
+                            let
+                                ( x, y ) =
+                                    c
+                            in
+                                Dict.get c gs.costs
+                                    |> Maybe.andThen
+                                        (\cost ->
+                                            case cost.parent of
+                                                IsStart ->
+                                                    Nothing
+
+                                                Parent ( px, py ) ->
+                                                    Just
+                                                        (Svg.line
+                                                            [ SA.x1 (toString (x * dx + dx // 2))
+                                                            , SA.y1 (toString (y * dy + dy // 2))
+                                                            , SA.x2 (toString (px * dx + dx // 2))
+                                                            , SA.y2 (toString (py * dy + dy // 2))
+                                                            , SA.stroke ("#" ++ Styles.complement4)
+                                                            , SA.strokeWidth "4"
+                                                            ]
+                                                            []
+                                                        )
+                                        )
+                        )
+            )
+        |> Maybe.withDefault []
+
+
+progress : ( Int, Int ) -> GridState -> List (Svg Msg)
+progress ( dx, dy ) gs =
+    List.concat
+        [ gs.open
+            |> Set.toList
             |> List.map
-                (\( ( x, y ), tile ) ->
+                (\( x, y ) ->
                     Svg.rect
                         [ SA.x (toString (x * dx))
-                        , SA.y (toString (y * dy))
+                        , SA.y (toString (y * dx))
                         , SA.width (toString dx)
                         , SA.height (toString dy)
-                        , SA.fill ("#" ++ Styles.secY0)
-                        , SA.stroke ("#" ++ Styles.secY3)
+                        , SA.fill ("#" ++ Styles.secX1)
+                        , SA.stroke ("#" ++ Styles.secX2)
                         ]
                         []
                 )
-
-
-connections : Model -> List (Svg Msg)
-connections model =
-    if not model.showConnections then
-        []
-    else
-        List.concat
-            [ model.progress.open |> Set.toList
-            , model.progress.closed |> Set.toList
-            ]
-            |> List.filterMap
-                (\c ->
-                    let
-                        ( x, y ) =
-                            c
-
-                        ( dx, dy ) =
-                            calcDeltas model
-
-                        cost =
-                            Dict.get c model.progress.costs
-                    in
-                        cost
-                            |> Maybe.andThen (\cost -> cost.parent)
-                            |> Maybe.map
-                                (\( px, py ) ->
-                                    Svg.line
-                                        [ SA.x1 (toString (x * dx + dx // 2))
-                                        , SA.y1 (toString (y * dy + dy // 2))
-                                        , SA.x2 (toString (px * dx + dx // 2))
-                                        , SA.y2 (toString (py * dy + dy // 2))
-                                        , SA.stroke ("#" ++ Styles.secX4)
-                                        , SA.strokeOpacity "0.5"
-                                        , SA.strokeWidth "4"
-                                        ]
-                                        []
-                                )
+        , gs.closed
+            |> Set.toList
+            |> List.map
+                (\( x, y ) ->
+                    Svg.rect
+                        [ SA.x (toString (x * dx))
+                        , SA.y (toString (y * dx))
+                        , SA.width (toString dx)
+                        , SA.height (toString dy)
+                        , SA.fill ("#" ++ Styles.secX0)
+                        , SA.stroke ("#" ++ Styles.secX3)
+                        ]
+                        []
                 )
-
-
-pathConnections : Model -> List (Svg Msg)
-pathConnections model =
-    if not model.showConnections then
-        []
-    else
-        model.path
-            |> Maybe.map
-                (\path ->
-                    path
-                        |> List.filterMap
-                            (\c ->
-                                let
-                                    ( x, y ) =
-                                        c
-
-                                    ( dx, dy ) =
-                                        calcDeltas model
-
-                                    cost =
-                                        Dict.get c model.progress.costs
-                                in
-                                    cost
-                                        |> Maybe.andThen (\cost -> cost.parent)
-                                        |> Maybe.map
-                                            (\( px, py ) ->
-                                                Svg.line
-                                                    [ SA.x1 (toString (x * dx + dx // 2))
-                                                    , SA.y1 (toString (y * dy + dy // 2))
-                                                    , SA.x2 (toString (px * dx + dx // 2))
-                                                    , SA.y2 (toString (py * dy + dy // 2))
-                                                    , SA.stroke ("#" ++ Styles.complement4)
-                                                    , SA.strokeWidth "4"
-                                                    ]
-                                                    []
-                                            )
-                            )
-                )
+        , gs.path
             |> Maybe.withDefault []
-
-
-progress : Model -> List (Svg Msg)
-progress model =
-    let
-        ( dx, dy ) =
-            calcDeltas model
-    in
-        List.concat
-            [ model.progress.open
-                |> Set.toList
-                |> List.map
-                    (\( x, y ) ->
-                        Svg.rect
-                            [ SA.x (toString (x * dx))
-                            , SA.y (toString (y * dx))
-                            , SA.width (toString dx)
-                            , SA.height (toString dy)
-                            , SA.fill ("#" ++ Styles.secX1)
-                            , SA.stroke ("#" ++ Styles.secX2)
-                            ]
-                            []
-                    )
-            , model.progress.closed
-                |> Set.toList
-                |> List.map
-                    (\( x, y ) ->
-                        Svg.rect
-                            [ SA.x (toString (x * dx))
-                            , SA.y (toString (y * dx))
-                            , SA.width (toString dx)
-                            , SA.height (toString dy)
-                            , SA.fill ("#" ++ Styles.secX0)
-                            , SA.stroke ("#" ++ Styles.secX3)
-                            ]
-                            []
-                    )
-            , model.path
-                |> Maybe.withDefault []
-                |> List.map
-                    (\( x, y ) ->
-                        Svg.rect
-                            [ SA.x (toString (x * dx))
-                            , SA.y (toString (y * dx))
-                            , SA.width (toString dx)
-                            , SA.height (toString dy)
-                            , SA.fill ("#" ++ Styles.complement2)
-                            , SA.stroke ("#" ++ Styles.complement3)
-                            ]
-                            []
-                    )
-            ]
+            |> List.map
+                (\( x, y ) ->
+                    Svg.rect
+                        [ SA.x (toString (x * dx))
+                        , SA.y (toString (y * dx))
+                        , SA.width (toString dx)
+                        , SA.height (toString dy)
+                        , SA.fill ("#" ++ Styles.complement2)
+                        , SA.stroke ("#" ++ Styles.complement3)
+                        ]
+                        []
+                )
+        ]
 
 
 svgGrid : Model -> Svg Msg
@@ -245,18 +221,29 @@ svgGrid model =
     let
         ( w, h ) =
             model.svgSize
+
+        deltas =
+            calcDeltas model
     in
         svg
             [ SA.width (toString w)
             , SA.height (toString h)
             ]
             (List.concat
-                [ (startAndGoal model)
-                , (progress model)
-                , (connections model)
-                , (pathConnections model)
-                , (rocks model)
-                , (cellPoints model)
-                , (clickListeners model)
+                [ (startAndGoal deltas model.map)
+                , (List.concatMap (progress deltas) model.grids)
+                , (rocks deltas model.map)
+                , (if model.showConnections then
+                    List.concatMap (connections deltas) model.grids
+                   else
+                    []
+                  )
+                , (if model.showConnections then
+                    List.concatMap (pathConnections deltas) model.grids
+                   else
+                    []
+                  )
+                , (cellPoints deltas model.map)
+                , (clickListeners deltas model)
                 ]
             )
