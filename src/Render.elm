@@ -97,75 +97,68 @@ rocks ( dx, dy ) map =
 
 connections : ( Int, Int ) -> GridState -> List (Svg Msg)
 connections ( dx, dy ) gs =
-    List.concat
-        [ gs.open |> Set.toList
-        , gs.closed |> Set.toList
-        ]
-        |> List.filterMap
-            (\c ->
-                let
-                    ( x, y ) =
-                        c
-                in
-                    Dict.get c gs.costs
-                        |> Maybe.andThen
-                            (\cost ->
-                                case cost.parent of
-                                    IsStart ->
-                                        Nothing
+    let
+        render ( x, y ) p =
+            case p of
+                IsStart ->
+                    Nothing
 
-                                    Parent ( px, py ) ->
-                                        Just
-                                            (Svg.line
-                                                [ SA.x1 (toString (x * dx + dx // 2))
-                                                , SA.y1 (toString (y * dy + dy // 2))
-                                                , SA.x2 (toString (px * dx + dx // 2))
-                                                , SA.y2 (toString (py * dy + dy // 2))
-                                                , SA.stroke ("#" ++ Styles.secX4)
-                                                , SA.strokeOpacity "0.5"
-                                                , SA.strokeWidth "4"
-                                                ]
-                                                []
-                                            )
-                            )
-            )
+                Parent ( px, py ) ->
+                    Just
+                        (Svg.line
+                            [ SA.x1 (toString (x * dx + dx // 2))
+                            , SA.y1 (toString (y * dy + dy // 2))
+                            , SA.x2 (toString (px * dx + dx // 2))
+                            , SA.y2 (toString (py * dy + dy // 2))
+                            , SA.stroke ("#" ++ Styles.secX4)
+                            , SA.strokeOpacity "0.5"
+                            , SA.strokeWidth "4"
+                            ]
+                            []
+                        )
+    in
+        List.concat
+            [ gs.open |> Set.toList
+            , gs.closed |> Set.toList
+            ]
+            |> List.filterMap
+                (\c ->
+                    Dict.get c gs.costs
+                        |> Maybe.map .parent
+                        |> Maybe.andThen (render c)
+                )
 
 
 pathConnections : ( Int, Int ) -> GridState -> List (Svg Msg)
 pathConnections ( dx, dy ) gs =
-    gs.path
-        |> Maybe.map
-            (\path ->
-                path
-                    |> List.filterMap
-                        (\c ->
-                            let
-                                ( x, y ) =
-                                    c
-                            in
-                                Dict.get c gs.costs
-                                    |> Maybe.andThen
-                                        (\cost ->
-                                            case cost.parent of
-                                                IsStart ->
-                                                    Nothing
+    let
+        render ( x, y ) p =
+            case p of
+                IsStart ->
+                    Nothing
 
-                                                Parent ( px, py ) ->
-                                                    Just
-                                                        (Svg.line
-                                                            [ SA.x1 (toString (x * dx + dx // 2))
-                                                            , SA.y1 (toString (y * dy + dy // 2))
-                                                            , SA.x2 (toString (px * dx + dx // 2))
-                                                            , SA.y2 (toString (py * dy + dy // 2))
-                                                            , SA.stroke ("#" ++ Styles.complement4)
-                                                            , SA.strokeWidth "4"
-                                                            ]
-                                                            []
-                                                        )
-                                        )
+                Parent ( px, py ) ->
+                    Just
+                        (Svg.line
+                            [ SA.x1 (toString (x * dx + dx // 2))
+                            , SA.y1 (toString (y * dy + dy // 2))
+                            , SA.x2 (toString (px * dx + dx // 2))
+                            , SA.y2 (toString (py * dy + dy // 2))
+                            , SA.stroke ("#" ++ Styles.complement4)
+                            , SA.strokeWidth "4"
+                            ]
+                            []
                         )
-            )
-        |> Maybe.withDefault []
+    in
+        gs.path
+            |> Maybe.withDefault []
+            |> (List.filterMap
+                    (\c ->
+                        Dict.get c gs.costs
+                            |> Maybe.map .parent
+                            |> Maybe.andThen (render c)
+                    )
+               )
 
 
 progress : ( Int, Int ) -> GridState -> List (Svg Msg)

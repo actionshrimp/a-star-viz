@@ -19,3 +19,13 @@ Uses github pages:
 
     elm-app build
     gh-pages -d build
+
+## Extension ideas
+
+- Save / share terrain in base64 url
+- Control iteration speed / rendering rate
+- Control grid size / number of squares
+- Some way of visualising the costs again
+- Other algos
+- Racing algos
+- Move start / goal around
