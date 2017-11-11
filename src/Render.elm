@@ -211,8 +211,8 @@ progress ( dx, dy ) gs =
         ]
 
 
-svgGrid : Model -> Svg Msg
-svgGrid model =
+svgGrid : Model -> GridState -> Svg Msg
+svgGrid model gs =
     let
         ( w, h ) =
             model.svgSize
@@ -226,15 +226,15 @@ svgGrid model =
             ]
             (List.concat
                 [ (startAndGoal deltas model.map)
-                , (List.concatMap (progress deltas) model.grids)
+                , (progress deltas gs)
                 , (rocks deltas model.map)
                 , (if model.showConnections then
-                    List.concatMap (connections deltas) model.grids
+                    connections deltas gs
                    else
                     []
                   )
                 , (if model.showConnections then
-                    List.concatMap (pathConnections deltas) model.grids
+                    (pathConnections deltas gs)
                    else
                     []
                   )

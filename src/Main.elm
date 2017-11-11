@@ -33,7 +33,11 @@ init =
           , autoIterate = False
           , showConnections = False
           , map = map
-          , grids = [ Grid.initGridState map ]
+          , grids =
+                [ Grid.initGridState map
+
+                --, Grid.initGridState map
+                ]
           }
         , Cmd.none
         )
@@ -51,7 +55,7 @@ resetProgress model =
     in
         { model
             | autoIterate = False
-            , grids = [ Grid.initGridState model.map ]
+            , grids = initial.grids
         }
 
 
@@ -179,8 +183,10 @@ view model =
         , div [ class [ Styles.HeaderRule ] ] []
         , div [ class [ Styles.Container ] ]
             [ div [ class [ Styles.Container ] ]
-                [ svgGrid model
-                ]
+                (List.map
+                    (svgGrid model)
+                    model.grids
+                )
             , div [ class [ Styles.Sidebar ] ]
                 [ label [ class [ Styles.ToggleOption ] ]
                     [ input
