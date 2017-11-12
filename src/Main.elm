@@ -19,7 +19,7 @@ import Types exposing (..)
 
 mapSize : ( Int, Int )
 mapSize =
-    ( 32, 32 )
+    ( 64, 64 )
 
 
 init : ( Model, Cmd Msg )
@@ -27,16 +27,18 @@ init =
     let
         map =
             Map.emptyMap mapSize
+
+        g =
+            Grid.initGridState map
     in
         ( { svgSize = ( 512, 512 )
           , dragging = Nothing
           , autoIterate = False
           , showConnections = False
           , map = map
-          , grids =
-                [ Grid.initGridState map
-
-                --, Grid.initGridState map
+          , renderEvery = 10
+          , gridDisplays =
+                [ { current = g, rendered = g }
                 ]
           }
         , Cmd.none
@@ -55,8 +57,29 @@ resetProgress model =
     in
         { model
             | autoIterate = False
-            , grids = initial.grids
+            , gridDisplays = initial.gridDisplays
         }
+
+
+updateGridDisplay : Model -> GridDisplay -> GridDisplay
+updateGridDisplay model gd =
+    let
+        n =
+            model.renderEvery
+
+        next =
+            Grid.iterate model.map gd.current
+    in
+        if next.iteration == gd.current.iteration then
+            { gd | rendered = gd.current }
+        else if (next.iteration - gd.rendered.iteration) >= model.renderEvery then
+            { rendered = next
+            , current = next
+            }
+        else
+            { rendered = gd.rendered
+            , current = next
+            }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -105,25 +128,19 @@ update msg model =
                 )
 
             Iterate am ->
-                ( if not (List.any .canIterate model.grids) then
-                    model
-                  else if am == Auto && (not model.autoIterate) then
+                ( if am == Auto && (not model.autoIterate) then
                     -- This happens when the timer subscription fires for the
                     -- last time or two after autoIterate has been turned off
                     model
                   else
                     let
                         autoIterate =
-                            model.autoIterate
-                                && case am of
-                                    Auto ->
-                                        True
-
-                                    Manual ->
-                                        False
+                            model.autoIterate && am == Auto
                     in
                         { model
-                            | grids = List.map (Grid.iterate model.map) model.grids
+                            | gridDisplays =
+                                model.gridDisplays
+                                    |> List.map (updateGridDisplay model)
                             , autoIterate = autoIterate
                         }
                 , Cmd.none
@@ -183,9 +200,9 @@ view model =
         , div [ class [ Styles.HeaderRule ] ] []
         , div [ class [ Styles.Container ] ]
             [ div [ class [ Styles.Container ] ]
-                (List.map
-                    (svgGrid model)
-                    model.grids
+                (model.gridDisplays
+                    |> List.map (.rendered)
+                    |> List.map (svgGrid model)
                 )
             , div [ class [ Styles.Sidebar ] ]
                 [ label [ class [ Styles.ToggleOption ] ]

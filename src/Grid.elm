@@ -140,6 +140,7 @@ initGridState { start, goal } =
     , costs = Dict.fromList [ ( start, startCost goal start ) ]
     , closed = Set.empty
     , canIterate = True
+    , iteration = 0
     }
 
 
@@ -184,6 +185,7 @@ iterate map gs =
                 , costs = mergeCosts gs.costs newCosts
                 , path = gs.path
                 , canIterate = True
+                , iteration = gs.iteration + 1
                 }
                     |> withPath
         in

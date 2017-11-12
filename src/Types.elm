@@ -35,6 +35,13 @@ type alias GridState =
     , costs : Dict Coord Cost
     , path : Maybe (List Coord)
     , canIterate : Bool
+    , iteration : Int
+    }
+
+
+type alias GridDisplay =
+    { current : GridState
+    , rendered : GridState
     }
 
 
@@ -55,8 +62,9 @@ type alias Model =
     , dragging : Maybe Tile
     , autoIterate : Bool
     , showConnections : Bool
-    , grids : List GridState
+    , gridDisplays : List GridDisplay
     , map : Map
+    , renderEvery : Int
     }
 
 
@@ -94,7 +102,7 @@ calcDeltas model =
 
 canIterate : Model -> Bool
 canIterate m =
-    List.any .canIterate m.grids
+    List.any (\x -> x.rendered.canIterate) m.gridDisplays
 
 
 updateTiles : (Tiles -> Tiles) -> Model -> Model
