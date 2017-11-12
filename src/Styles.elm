@@ -142,6 +142,10 @@ baseSpacingSm =
     (Css.rem 0.5)
 
 
+baseSpacingXsm =
+    (Css.rem 0.25)
+
+
 
 -- rgb(  0,164,164) = rgba(  0,164,164,1) = rgb0(0,0.643,0.643)
 --
@@ -204,7 +208,9 @@ css =
             , displayFlex
             , children
                 [ input
-                    [ marginTop (Css.rem 0) ]
+                    [ marginTop (Css.rem 0.2)
+                    , marginRight baseSpacingSm
+                    ]
                 ]
             ]
         , class SliderInput
@@ -222,12 +228,16 @@ css =
             [ backgroundImage none
             , backgroundColor (hex primary2)
             , display block
-            , border3 (px 2) solid (hex primary3)
+
+            --, border3 (px 2) solid (hex primary3)
+            , border (Css.rem 0)
             , color (rgba 0 0 0 0.8)
             , padding baseSpacingSm
-            , fontSize (em 1)
-            , minWidth (em 15)
+            , minWidth (Css.rem 10)
+            , borderRadius baseSpacingXsm
             , marginBottom baseSpacing
+            , marginRight auto
+            , marginLeft auto
             , fontWeight bold
             , outline none
             , disabled
