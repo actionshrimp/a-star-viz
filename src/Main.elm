@@ -152,6 +152,16 @@ update msg model =
             ToggleShowConnections ->
                 ( { model | showConnections = (not oldShowConnections) }, Cmd.none )
 
+            ToggleAllowDiagonal ->
+                let
+                    map =
+                        model.map
+                in
+                    ( { model | map = { map | allowDiagonal = not model.map.allowDiagonal } }
+                        |> resetProgress
+                    , Cmd.none
+                    )
+
             ResetProgress ->
                 ( resetProgress model
                 , Cmd.none
@@ -213,6 +223,15 @@ view model =
                         ]
                         []
                     , Html.text "Show connections"
+                    ]
+                , label [ class [ Styles.ToggleOption ] ]
+                    [ input
+                        [ HA.type_ "checkbox"
+                        , E.onClick ToggleAllowDiagonal
+                        , HA.checked model.map.allowDiagonal
+                        ]
+                        []
+                    , Html.text "Allow diagonal movement"
                     ]
                 , button
                     [ (E.onClick ResetProgress)

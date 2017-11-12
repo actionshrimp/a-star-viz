@@ -13,15 +13,21 @@ totalScore { walkScore, heuristicScore } =
 
 neighbours : Map -> Coord -> List Coord
 neighbours map ( x, y ) =
-    [ ( x + 1, y )
-    , ( x + 1, y + 1 )
-    , ( x + 1, y - 1 )
-    , ( x - 1, y )
-    , ( x - 1, y + 1 )
-    , ( x - 1, y - 1 )
-    , ( x, y + 1 )
-    , ( x, y - 1 )
-    ]
+    List.concat
+        [ [ ( x + 1, y )
+          , ( x - 1, y )
+          , ( x, y + 1 )
+          , ( x, y - 1 )
+          ]
+        , if map.allowDiagonal then
+            [ ( x + 1, y + 1 )
+            , ( x + 1, y - 1 )
+            , ( x - 1, y + 1 )
+            , ( x - 1, y - 1 )
+            ]
+          else
+            []
+        ]
         |> List.filter (\c -> Dict.member c map.tiles)
 
 

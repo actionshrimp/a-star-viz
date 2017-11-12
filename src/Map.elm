@@ -30,6 +30,7 @@ emptyMap ( w, h ) =
         , tiles = toTiles tileLists
         , start = ( 0, 0 )
         , goal = ( w - 1, h - 1 )
+        , allowDiagonal = False
         }
 
 

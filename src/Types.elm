@@ -54,6 +54,7 @@ type alias Map =
     , goal : Coord
     , size : ( Int, Int )
     , tiles : Tiles
+    , allowDiagonal : Bool
     }
 
 
@@ -79,6 +80,7 @@ type Msg
     | MouseUp
     | Iterate AutoManual
     | ToggleAutoIterate
+    | ToggleAllowDiagonal
     | ResetTiles
     | ResetProgress
     | ToggleShowConnections
