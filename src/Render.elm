@@ -1,9 +1,11 @@
 module Render exposing (..)
 
 import Dict exposing (Dict)
+import Html exposing (Html, div)
 import Html.Events as E
+import Round
 import Set
-import Styles
+import Styles exposing (class)
 import Svg exposing (Svg, svg)
 import Svg.Attributes as SA
 import Types exposing (..)
@@ -211,34 +213,67 @@ progress ( dx, dy ) gs =
         ]
 
 
-svgGrid : Model -> GridState -> Svg Msg
-svgGrid model gs =
+svgGrid : Model -> GridDisplay -> Html Msg
+svgGrid model gd =
     let
         ( w, h ) =
             model.svgSize
 
         deltas =
             calcDeltas model
+
+        gs =
+            gd.rendered
     in
-        svg
-            [ SA.width (toString w)
-            , SA.height (toString h)
-            ]
-            (List.concat
-                [ (startAndGoal deltas model.map)
-                , (progress deltas gs)
-                , (rocks deltas model.map)
-                , (if model.showConnections then
-                    connections deltas gs
-                   else
-                    []
-                  )
-                , (if model.showConnections then
-                    (pathConnections deltas gs)
-                   else
-                    []
-                  )
-                , (cellPoints deltas model.map)
-                , (clickListeners deltas model)
+        div []
+            [ svg
+                [ SA.width (toString w)
+                , SA.height (toString h)
                 ]
-            )
+                (List.concat
+                    [ (startAndGoal deltas model.map)
+                    , (progress deltas gs)
+                    , (rocks deltas model.map)
+                    , (if model.showConnections then
+                        connections deltas gs
+                       else
+                        []
+                      )
+                    , (if model.showConnections then
+                        (pathConnections deltas gs)
+                       else
+                        []
+                      )
+                    , (cellPoints deltas model.map)
+                    , (clickListeners deltas model)
+                    ]
+                )
+            , div
+                [ class [ Styles.GridStats ] ]
+                (case gd.stats of
+                    Nothing ->
+                        []
+
+                    Just s ->
+                        List.concat
+                            [ [ div []
+                                    [ Html.text ("Rendered iteration: " ++ (toString gd.rendered.iteration))
+                                    ]
+                              ]
+                            , case s.rate of
+                                Nothing ->
+                                    []
+
+                                Just r ->
+                                    [ div []
+                                        [ Html.text
+                                            ("Rate: "
+                                                ++ (Round.round 2 r)
+                                                ++ " iter/s at iteration "
+                                                ++ (toString s.lastCalcIterations)
+                                            )
+                                        ]
+                                    ]
+                            ]
+                )
+            ]

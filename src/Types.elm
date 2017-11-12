@@ -2,6 +2,7 @@ module Types exposing (..)
 
 import Dict exposing (Dict)
 import Set exposing (Set)
+import Time exposing (Time)
 
 
 type Hole
@@ -42,6 +43,7 @@ type alias GridState =
 type alias GridDisplay =
     { current : GridState
     , rendered : GridState
+    , stats : Maybe GridStats
     }
 
 
@@ -87,6 +89,14 @@ type Msg
     | GenerateRandomTiles
     | UpdateTiles (List (List Tile))
     | UpdateRenderEvery String
+    | CalcRate Time
+
+
+type alias GridStats =
+    { lastCalcTime : Time
+    , lastCalcIterations : Int
+    , rate : Maybe Float
+    }
 
 
 calcDeltas : Model -> ( Int, Int )
@@ -128,3 +138,28 @@ toggleTerrain t =
 
         E ->
             Rock
+
+
+updateStats : Time -> GridDisplay -> GridDisplay
+updateStats t gd =
+    let
+        its =
+            gd.current.iteration
+    in
+        case gd.stats of
+            Nothing ->
+                { gd | stats = Just { lastCalcTime = t, lastCalcIterations = its, rate = Nothing } }
+
+            Just s ->
+                { gd
+                    | stats =
+                        Just
+                            { lastCalcTime = t
+                            , lastCalcIterations = its
+                            , rate =
+                                Just
+                                    ((toFloat (its - s.lastCalcIterations))
+                                        / (Time.inSeconds t - Time.inSeconds s.lastCalcTime)
+                                    )
+                            }
+                }

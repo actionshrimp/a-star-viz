@@ -4,12 +4,11 @@ import Dict exposing (Dict)
 import Grid
 import Html exposing (Html, text, div, img, h1, button, input, label)
 import Html.Attributes as HA
-import Html.CssHelpers
 import Html.Events as E
 import Map
 import Random
 import Render exposing (svgGrid)
-import Styles
+import Styles exposing (class, id)
 import Time
 import Types exposing (..)
 
@@ -52,7 +51,7 @@ init =
           , map = map
           , renderEvery = 1
           , gridDisplays =
-                [ { current = g, rendered = g }
+                [ { current = g, rendered = g, stats = Nothing }
                 ]
           }
         , Cmd.none
@@ -87,12 +86,14 @@ updateGridDisplay model gd =
         if next.iteration == gd.current.iteration then
             { gd | rendered = gd.current }
         else if (next.iteration - gd.rendered.iteration) >= model.renderEvery then
-            { rendered = next
-            , current = next
+            { gd
+                | rendered = next
+                , current = next
             }
         else
-            { rendered = gd.rendered
-            , current = next
+            { gd
+                | rendered = gd.rendered
+                , current = next
             }
 
 
@@ -215,13 +216,14 @@ update msg model =
                 , Cmd.none
                 )
 
+            CalcRate newTime ->
+                ( { model | gridDisplays = List.map (updateStats newTime) model.gridDisplays }
+                , Cmd.none
+                )
+
 
 
 ---- VIEW ----
-
-
-{ id, class, classList } =
-    Html.CssHelpers.withNamespace Styles.ns
 
 
 view : Model -> Html Msg
@@ -231,10 +233,7 @@ view model =
         , div [ class [ Styles.HeaderRule ] ] []
         , div [ class [ Styles.Container ] ]
             [ div [ class [ Styles.Container ] ]
-                (model.gridDisplays
-                    |> List.map (.rendered)
-                    |> List.map (svgGrid model)
-                )
+                (List.map (svgGrid model) model.gridDisplays)
             , div [ class [ Styles.Sidebar ] ]
                 [ div [ class [ Styles.SidebarHeading ] ]
                     [ Html.text "Options:" ]
@@ -313,7 +312,10 @@ view model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     if (canIterate model && model.autoIterate) then
-        Time.every (Time.millisecond * 2) (always (Iterate Auto))
+        Sub.batch
+            [ Time.every (Time.millisecond * 2) (always (Iterate Auto))
+            , Time.every (Time.second) CalcRate
+            ]
     else
         Sub.none
 

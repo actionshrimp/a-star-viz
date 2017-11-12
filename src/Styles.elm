@@ -3,6 +3,7 @@ module Styles exposing (..)
 import Css exposing (..)
 import Css.Elements exposing (body, li, button, input)
 import Css.Namespace exposing (namespace)
+import Html.CssHelpers
 
 
 ns : String
@@ -14,6 +15,7 @@ type CssClasses
     = Grid
     | GridRow
     | GridCell
+    | GridStats
     | Container
     | Sidebar
     | Header
@@ -170,40 +172,46 @@ css =
             , textAlign center
             , property "user-select" "none"
             ]
-        , id Page
+        , Css.id Page
             [ padding baseSpacing
             ]
-        , class Header
+        , Css.class Header
             [ fontSize (Css.rem 2.6)
             , textAlign left
             , color (hex primary0)
             ]
-        , class HeaderRule
+        , Css.class HeaderRule
             [ backgroundImage (linearGradient2 toRight (stop <| (hex complement0)) (stop <| (hex "FFFFFF")) [])
             , height (Css.rem 0.2)
             , width (pct 100)
             ]
-        , class Container
+        , Css.class Container
             [ displayFlex
             , justifyContent flexStart
             , marginTop baseSpacing
             ]
-        , class Grid
+        , Css.class Grid
             [ displayFlex
             , flexDirection column
             ]
-        , class GridRow
+        , Css.class GridRow
             [ displayFlex
             , flexDirection row
             ]
-        , class GridCell
+        , Css.class GridCell
             [ width (px 50)
             , height (px 50)
             ]
-        , class Sidebar
+        , Css.class GridStats
+            [ displayFlex
+            , flexDirection column
+            , textAlign left
+            , fontSize (Css.rem 0.8)
+            ]
+        , Css.class Sidebar
             [ padding baseSpacing
             ]
-        , class ToggleOption
+        , Css.class ToggleOption
             [ marginBottom baseSpacing
             , displayFlex
             , children
@@ -213,12 +221,12 @@ css =
                     ]
                 ]
             ]
-        , class SliderInput
+        , Css.class SliderInput
             [ marginBottom baseSpacing
             , displayFlex
             , flexDirection column
             ]
-        , class SidebarHeading
+        , Css.class SidebarHeading
             [ marginBottom baseSpacing
             , fontWeight bold
             , textAlign left
@@ -243,7 +251,12 @@ css =
             , disabled
                 [ backgroundColor (hex primary1)
                 , color (hex "CCCCCC")
-                , border3 (px 2) solid (hex primary2)
+
+                --, border3 (px 2) solid (hex primary2)
                 ]
             ]
         ]
+
+
+{ id, class, classList } =
+    Html.CssHelpers.withNamespace ns
