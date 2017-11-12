@@ -22,6 +22,20 @@ mapSize =
     ( 64, 64 )
 
 
+mapInputToRenderEvery : String -> Int
+mapInputToRenderEvery i =
+    (String.toInt i)
+        |> Result.withDefault 0
+        |> (^) 10
+
+
+mapRenderEveryToInput : Int -> String
+mapRenderEveryToInput i =
+    logBase 10 (toFloat i)
+        |> round
+        |> toString
+
+
 init : ( Model, Cmd Msg )
 init =
     let
@@ -36,7 +50,7 @@ init =
           , autoIterate = False
           , showConnections = False
           , map = map
-          , renderEvery = 10
+          , renderEvery = 1
           , gridDisplays =
                 [ { current = g, rendered = g }
                 ]
@@ -194,6 +208,13 @@ update msg model =
                 , Cmd.none
                 )
 
+            UpdateRenderEvery reStr ->
+                ( { model
+                    | renderEvery = mapInputToRenderEvery reStr
+                  }
+                , Cmd.none
+                )
+
 
 
 ---- VIEW ----
@@ -215,15 +236,8 @@ view model =
                     |> List.map (svgGrid model)
                 )
             , div [ class [ Styles.Sidebar ] ]
-                [ label [ class [ Styles.ToggleOption ] ]
-                    [ input
-                        [ HA.type_ "checkbox"
-                        , E.onClick ToggleShowConnections
-                        , HA.checked model.showConnections
-                        ]
-                        []
-                    , Html.text "Show connections"
-                    ]
+                [ div [ class [ Styles.SidebarHeading ] ]
+                    [ Html.text "Options:" ]
                 , label [ class [ Styles.ToggleOption ] ]
                     [ input
                         [ HA.type_ "checkbox"
@@ -233,6 +247,35 @@ view model =
                         []
                     , Html.text "Allow diagonal movement"
                     ]
+                , div [ class [ Styles.SidebarHeading ] ]
+                    [ Html.text "Rendering:" ]
+                , label [ class [ Styles.ToggleOption ] ]
+                    [ input
+                        [ HA.type_ "checkbox"
+                        , E.onClick ToggleShowConnections
+                        , HA.checked model.showConnections
+                        ]
+                        []
+                    , Html.text "Show connections"
+                    ]
+                , label [ class [ Styles.SliderInput ] ]
+                    [ input
+                        [ HA.type_ "range"
+                        , HA.min "0"
+                        , HA.max "5"
+                        , E.onInput UpdateRenderEvery
+                        , HA.value (mapRenderEveryToInput model.renderEvery)
+                        ]
+                        []
+                    , Html.text
+                        (if model.renderEvery == 1 then
+                            "Render every iteration"
+                         else
+                            ("Render every " ++ (toString model.renderEvery) ++ " iterations")
+                        )
+                    ]
+                , div [ class [ Styles.SidebarHeading ] ]
+                    [ Html.text "Actions:" ]
                 , button
                     [ (E.onClick ResetProgress)
                     ]

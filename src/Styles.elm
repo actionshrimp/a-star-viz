@@ -1,8 +1,7 @@
 module Styles exposing (..)
 
-import Color
 import Css exposing (..)
-import Css.Elements exposing (body, li, button)
+import Css.Elements exposing (body, li, button, input)
 import Css.Namespace exposing (namespace)
 
 
@@ -20,6 +19,8 @@ type CssClasses
     | Header
     | HeaderRule
     | ToggleOption
+    | SliderInput
+    | SidebarHeading
 
 
 type CssIds
@@ -133,6 +134,14 @@ complement4 =
     "00A4A4"
 
 
+baseSpacing =
+    (Css.rem 1)
+
+
+baseSpacingSm =
+    (Css.rem 0.5)
+
+
 
 -- rgb(  0,164,164) = rgba(  0,164,164,1) = rgb0(0,0.643,0.643)
 --
@@ -152,28 +161,28 @@ css =
                 , (qt "Helvetica Neue")
                 , "sans-serif"
                 ]
-            , fontSize (px 14)
+            , fontSize (pct 100)
             , margin (px 0)
             , textAlign center
             , property "user-select" "none"
             ]
         , id Page
-            [ padding (em 1)
+            [ padding baseSpacing
             ]
         , class Header
-            [ fontSize (em 2.6)
+            [ fontSize (Css.rem 2.6)
             , textAlign left
             , color (hex primary0)
             ]
         , class HeaderRule
             [ backgroundImage (linearGradient2 toRight (stop <| (hex complement0)) (stop <| (hex "FFFFFF")) [])
-            , height (px 3)
+            , height (Css.rem 0.2)
             , width (pct 100)
             ]
         , class Container
             [ displayFlex
             , justifyContent flexStart
-            , marginTop (em 1)
+            , marginTop baseSpacing
             ]
         , class Grid
             [ displayFlex
@@ -188,11 +197,26 @@ css =
             , height (px 50)
             ]
         , class Sidebar
-            [ padding (px 20)
+            [ padding baseSpacing
             ]
         , class ToggleOption
-            [ marginBottom (em 1)
-            , display block
+            [ marginBottom baseSpacing
+            , displayFlex
+            , children
+                [ input
+                    [ marginTop (Css.rem 0) ]
+                ]
+            ]
+        , class SliderInput
+            [ marginBottom baseSpacing
+            , displayFlex
+            , flexDirection column
+            ]
+        , class SidebarHeading
+            [ marginBottom baseSpacing
+            , fontWeight bold
+            , textAlign left
+            , fontSize (Css.rem 1.2)
             ]
         , button
             [ backgroundImage none
@@ -200,10 +224,10 @@ css =
             , display block
             , border3 (px 2) solid (hex primary3)
             , color (rgba 0 0 0 0.8)
-            , padding (em 0.5)
+            , padding baseSpacingSm
             , fontSize (em 1)
             , minWidth (em 15)
-            , marginBottom (em 1)
+            , marginBottom baseSpacing
             , fontWeight bold
             , outline none
             , disabled

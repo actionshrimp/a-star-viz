@@ -86,6 +86,7 @@ type Msg
     | ToggleShowConnections
     | GenerateRandomTiles
     | UpdateTiles (List (List Tile))
+    | UpdateRenderEvery String
 
 
 calcDeltas : Model -> ( Int, Int )
