@@ -48,7 +48,9 @@ type alias GridDisplay =
 
 
 type alias Tiles =
-    Dict Coord Tile
+    { d : Dict Coord Tile
+    , l : List ( ( Int, Int ), Tile )
+    }
 
 
 type alias Map =
@@ -118,16 +120,27 @@ canIterate m =
     List.any (\x -> x.rendered.canIterate) m.gridDisplays
 
 
-updateTiles : (Tiles -> Tiles) -> Model -> Model
-updateTiles f model =
-    let
+updateTilesByCoord : (Dict Coord Tile -> Dict Coord Tile) -> Model -> Model
+updateTilesByCoord f model =
+    lets
         oldMap =
             model.map
 
         oldTiles =
             model.map.tiles
+
+        d =
+            f oldTiles.d
     in
-        { model | map = { oldMap | tiles = (f oldTiles) } }
+        { model
+            | map =
+                { oldMap
+                    | tiles =
+                        { d = d
+                        , l = d |> Dict.toList
+                        }
+                }
+        }
 
 
 toggleTerrain : Tile -> Tile

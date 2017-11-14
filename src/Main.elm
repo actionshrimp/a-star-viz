@@ -113,12 +113,12 @@ update msg model =
             MouseDown coord ->
                 let
                     targetTile =
-                        (Dict.get coord model.map.tiles)
+                        (Dict.get coord model.map.tiles.d)
                             |> Maybe.withDefault E
                             |> toggleTerrain
                 in
                     ( { model | dragging = (Just targetTile) }
-                        |> updateTiles (Dict.insert coord targetTile)
+                        |> updateTilesByCoord (Dict.insert coord targetTile)
                         |> update ResetProgress
                         |> Tuple.first
                     , Cmd.none
@@ -131,7 +131,7 @@ update msg model =
 
                     Just t ->
                         model
-                            |> updateTiles (Dict.insert coord t)
+                            |> updateTilesByCoord (Dict.insert coord t)
                 , Cmd.none
                 )
 
@@ -188,7 +188,7 @@ update msg model =
                         init
                 in
                     ( model
-                        |> updateTiles (always initial.map.tiles)
+                        |> updateTilesByCoord (always initial.map.tiles.d)
                         |> resetProgress
                     , Cmd.none
                     )
@@ -197,17 +197,14 @@ update msg model =
                 ( model, Random.generate UpdateTiles (Map.generateRandom mapSize 0.3) )
 
             UpdateTiles newTiles ->
-                ( model
-                    |> updateTiles
-                        (always
-                            (newTiles
-                                |> Map.toTiles
-                                |> Map.removeEndpoints model.map
-                            )
-                        )
-                    |> resetProgress
-                , Cmd.none
-                )
+                let
+                    oldMap =
+                        model.map
+                in
+                    ( { model | map = { oldMap | tiles = Map.toTiles newTiles } }
+                        |> resetProgress
+                    , Cmd.none
+                    )
 
             UpdateRenderEvery reStr ->
                 ( { model

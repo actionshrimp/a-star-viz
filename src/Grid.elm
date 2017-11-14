@@ -28,7 +28,7 @@ neighbours map ( x, y ) =
           else
             []
         ]
-        |> List.filter (\c -> Dict.member c map.tiles)
+        |> List.filter (\c -> Dict.member c map.tiles.d)
 
 
 tileCost : Tile -> Maybe Float
@@ -63,7 +63,7 @@ travelCost map ( parentCoord, parentCost ) ( x, y ) =
             Nothing
 
         Parent ( px, py ) ->
-            Dict.get ( x, y ) map.tiles
+            Dict.get ( x, y ) map.tiles.d
                 |> Maybe.andThen tileCost
                 |> Maybe.map
                     (\tc ->

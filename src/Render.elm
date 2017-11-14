@@ -30,11 +30,8 @@ startAndGoal ( dx, dy ) map =
 
 cellPoints : ( Int, Int ) -> Map -> List (Svg a)
 cellPoints ( dx, dy ) map =
-    let
-        terrainList =
-            Dict.toList map.tiles
-    in
-        List.map
+    map.tiles.l
+        |> List.map
             (\( ( x, y ), tile ) ->
                 Svg.circle
                     [ SA.cx (toString (x * dx + dx // 2))
@@ -45,16 +42,12 @@ cellPoints ( dx, dy ) map =
                     ]
                     []
             )
-            terrainList
 
 
 clickListeners : ( Int, Int ) -> Model -> List (Svg Msg)
 clickListeners ( dx, dy ) model =
-    let
-        terrainList =
-            Dict.toList model.map.tiles
-    in
-        List.map
+    model.map.tiles.l
+        |> List.map
             (\( ( x, y ), tile ) ->
                 Svg.rect
                     (List.concat
@@ -77,13 +70,11 @@ clickListeners ( dx, dy ) model =
                     )
                     []
             )
-            terrainList
 
 
 rocks : ( Int, Int ) -> Map -> List (Svg Msg)
 rocks ( dx, dy ) map =
-    map.tiles
-        |> Dict.toList
+    map.tiles.l
         |> List.filter (\( c, t ) -> t == Rock)
         |> List.map
             (\( ( x, y ), tile ) ->

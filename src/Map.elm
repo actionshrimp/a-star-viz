@@ -7,17 +7,23 @@ import Types exposing (..)
 
 toTiles : List (List Tile) -> Tiles
 toTiles tileLists =
-    tileLists
-        |> List.indexedMap
-            (\y row ->
-                List.indexedMap
-                    (\x tile ->
-                        ( ( x, y ), tile )
+    let
+        d =
+            tileLists
+                |> List.indexedMap
+                    (\y row ->
+                        List.indexedMap
+                            (\x tile ->
+                                ( ( x, y ), tile )
+                            )
+                            row
                     )
-                    row
-            )
-        |> List.concat
-        |> Dict.fromList
+                |> List.concat
+                |> Dict.fromList
+    in
+        { l = d |> Dict.toList
+        , d = d
+        }
 
 
 emptyMap : ( Int, Int ) -> Map
@@ -30,15 +36,21 @@ emptyMap ( w, h ) =
         , tiles = toTiles tileLists
         , start = ( 0, 0 )
         , goal = ( w - 1, h - 1 )
-        , allowDiagonal = False
+        , allowDiagonal = True
         }
 
 
 removeEndpoints : Map -> Tiles -> Tiles
-removeEndpoints { start, goal } terrain =
-    terrain
-        |> Dict.update start (Maybe.map (always E))
-        |> Dict.update goal (Maybe.map (always E))
+removeEndpoints { start, goal } tiles =
+    let
+        d =
+            tiles.d
+                |> Dict.update start (Maybe.map (always E))
+                |> Dict.update goal (Maybe.map (always E))
+    in
+        { d = d
+        , l = d |> Dict.toList
+        }
 
 
 generateMaze : List Coord
