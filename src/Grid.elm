@@ -28,7 +28,8 @@ neighbours map ( x, y ) =
           else
             []
         ]
-        |> List.filter (\c -> Dict.member c map.tiles.d)
+        |> List.filter
+        |> (flip Dict.member) map.tiles.d
 
 
 tileCost : Tile -> Maybe Float
