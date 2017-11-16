@@ -159,7 +159,7 @@ pathConnections ( dx, dy ) gs =
 progress : ( Int, Int ) -> GridState -> List (Svg Msg)
 progress ( dx, dy ) gs =
     List.concat
-        [ gs.open
+        [ gs.closed
             |> Set.toList
             |> List.map
                 (\( x, y ) ->
@@ -169,11 +169,11 @@ progress ( dx, dy ) gs =
                         , SA.width (toString dx)
                         , SA.height (toString dy)
                         , SA.fill ("#" ++ Styles.secX1)
-                        , SA.stroke ("#" ++ Styles.secX2)
+                        , SA.stroke ("#" ++ Styles.secX3)
                         ]
                         []
                 )
-        , gs.closed
+        , gs.open
             |> Set.toList
             |> List.map
                 (\( x, y ) ->
@@ -182,8 +182,22 @@ progress ( dx, dy ) gs =
                         , SA.y (toString (y * dx))
                         , SA.width (toString dx)
                         , SA.height (toString dy)
-                        , SA.fill ("#" ++ Styles.secX0)
-                        , SA.stroke ("#" ++ Styles.secX3)
+                        , SA.fill
+                            ("#"
+                                ++ (if gs.canIterate then
+                                        Styles.complement1
+                                    else
+                                        Styles.secX0
+                                   )
+                            )
+                        , SA.stroke
+                            ("#"
+                                ++ (if gs.canIterate then
+                                        Styles.secX0
+                                    else
+                                        Styles.secX3
+                                   )
+                            )
                         ]
                         []
                 )
