@@ -18,7 +18,7 @@ import Types exposing (..)
 
 mapSize : ( Int, Int )
 mapSize =
-    ( 64, 64 )
+    ( 48, 48 )
 
 
 inputToRenderEvery : String -> Int
