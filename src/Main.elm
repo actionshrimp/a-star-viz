@@ -200,8 +200,16 @@ update msg model =
                 let
                     oldMap =
                         model.map
+
+                    newMap =
+                        { oldMap
+                            | tiles =
+                                newTiles
+                                    |> Map.toTiles
+                                    |> Map.removeEndpoints oldMap
+                        }
                 in
-                    ( { model | map = { oldMap | tiles = Map.toTiles newTiles } }
+                    ( { model | map = newMap }
                         |> resetProgress
                     , Cmd.none
                     )
