@@ -21,15 +21,15 @@ mapSize =
     ( 64, 64 )
 
 
-mapInputToRenderEvery : String -> Int
-mapInputToRenderEvery i =
+inputToRenderEvery : String -> Int
+inputToRenderEvery i =
     (String.toInt i)
         |> Result.withDefault 0
         |> (^) 10
 
 
-mapRenderEveryToInput : Int -> String
-mapRenderEveryToInput i =
+renderEveryToInput : Int -> String
+renderEveryToInput i =
     logBase 10 (toFloat i)
         |> round
         |> toString
@@ -208,7 +208,7 @@ update msg model =
 
             UpdateRenderEvery reStr ->
                 ( { model
-                    | renderEvery = mapInputToRenderEvery reStr
+                    | renderEvery = inputToRenderEvery reStr
                   }
                 , Cmd.none
                 )
@@ -260,7 +260,7 @@ view model =
                         , HA.min "0"
                         , HA.max "5"
                         , E.onInput UpdateRenderEvery
-                        , HA.value (mapRenderEveryToInput model.renderEvery)
+                        , HA.value (renderEveryToInput model.renderEvery)
                         ]
                         []
                     , Html.text
