@@ -122,7 +122,7 @@ canIterate m =
 
 updateTilesByCoord : (Dict Coord Tile -> Dict Coord Tile) -> Model -> Model
 updateTilesByCoord f model =
-    lets
+    let
         oldMap =
             model.map
 
