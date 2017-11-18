@@ -83,9 +83,11 @@ updateGridDisplay model gd =
         next =
             Grid.iterate model.map gd.current
     in
-        if next.iteration == gd.current.iteration then
-            { gd | rendered = gd.current }
-        else if (next.iteration - gd.rendered.iteration) >= model.renderEvery then
+        if
+            (not next.canIterate)
+                || (next.iteration - gd.rendered.iteration)
+                >= model.renderEvery
+        then
             { gd
                 | rendered = next
                 , current = next
